@@ -1,0 +1,5 @@
+{
+  "name": "swc-workload",
+  "version": "1.0.0",
+  "description": "swc_workload CLI — a path-driven tree manager for workload.json files. Pure tool plugin: ships the binary, no skills."
+}
