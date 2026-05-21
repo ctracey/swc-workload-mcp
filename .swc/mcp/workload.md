@@ -2,10 +2,10 @@
 
 ## Work items
 
-- [ ] **1. Reshape the repo as an MCP service**
-  - [ ] 1.1. Add `pyproject.toml` (declare `mcp` dep, console-script entry point)
-  - [ ] 1.2. Create `swc_workload_mcp/` package skeleton (`__init__.py`, `__main__.py`)
-  - [ ] 1.3. Remove `.claude-plugin/plugin.json` and update `.gitignore` as needed
+- [x] **1. Reshape the repo as an MCP service**
+  - [x] 1.1. Add `pyproject.toml` (declare `mcp` dep, console-script entry point)
+  - [x] 1.2. Create `swc_workload_mcp/` package skeleton (`__init__.py`, `__main__.py`)
+  - [x] 1.3. Remove `.claude-plugin/plugin.json` and update `.gitignore` as needed
 
 - [ ] **2. Build the MCP server**
   - [ ] 2.1. Subprocess bridge — invoke `bin/swc_workload --json` and parse output
