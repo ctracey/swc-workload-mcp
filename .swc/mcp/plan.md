@@ -3,7 +3,7 @@
 ## Goal / Why
 
 Build a lightweight MCP server that wraps the externally-installed
-`swc_workload` CLI so AI agents (Claude Code and other MCP clients) can
+`swc-workload` CLI so AI agents (Claude Code and other MCP clients) can
 manage workload items via structured tool calls instead of shelling out and
 parsing CLI output. Done when the MCP service is verified working
 end-to-end via testing.
@@ -25,7 +25,7 @@ tool with structured arguments and results.
   removed.
 - Build the MCP server with the official `mcp` Python SDK (FastMCP).
   Expose each CLI op as a flat-named tool. The server invokes the
-  externally-installed `swc_workload` CLI as a subprocess with `--json`
+  externally-installed `swc-workload` CLI as a subprocess with `--json`
   and translates the result into the MCP tool response. The CLI binary is
   resolved via `SWC_WORKLOAD_BIN` env var → PATH lookup. CLI errors map
   to MCP tool errors; a missing CLI surfaces an actionable error pointing

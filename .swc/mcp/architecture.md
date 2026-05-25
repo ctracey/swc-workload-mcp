@@ -2,7 +2,7 @@
 
 ## Context
 
-This repo is an MCP service that wraps the `swc_workload` CLI so MCP-aware
+This repo is an MCP service that wraps the `swc-workload` CLI so MCP-aware
 AI agents can call workload operations as structured tool invocations
 instead of shelling out and parsing CLI output.
 
@@ -23,7 +23,7 @@ as an **external dependency** that is expected to be available on PATH.
 - **CLI bridging:** MCP tool implementations invoke the CLI as a subprocess
   with `--json`, parse the structured output, and return it as the MCP
   tool result. The CLI binary is resolved as: `SWC_WORKLOAD_BIN` env var
-  override → `shutil.which("swc_workload")` on PATH.
+  override → `shutil.which("swc-workload")` on PATH.
 - **Error handling:** CLI non-zero exit + stderr → MCP tool error. Missing
   CLI (binary not found) → a structured, actionable MCP tool error that
   points the user at <https://github.com/ctracey/swc-workload-cli> for
@@ -52,7 +52,7 @@ swc-workload-mcp/
 - **CLI is an external dependency, not bundled.** This repo ships only
   the MCP service. The CLI is installed separately from
   <https://github.com/ctracey/swc-workload-cli>. The MCP service depends
-  on `swc_workload` being available on PATH (or via `SWC_WORKLOAD_BIN`
+  on `swc-workload` being available on PATH (or via `SWC_WORKLOAD_BIN`
   env var override) at runtime.
 - **Graceful degradation when CLI is missing.** On startup, the server
   performs a `shutil.which` lookup and logs a warning to stderr if the

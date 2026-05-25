@@ -13,11 +13,11 @@
 
 ## Solution decisions
 
-- **CLI is an external dependency.** The `swc_workload` CLI lives in its
+- **CLI is an external dependency.** The `swc-workload` CLI lives in its
   own repo (<https://github.com/ctracey/swc-workload-cli>) and is
   installed independently. This repo ships only the MCP service. The
   bridge resolves the CLI binary via `SWC_WORKLOAD_BIN` env var →
-  `shutil.which("swc_workload")` on PATH. Reason: keeps the MCP and CLI
+  `shutil.which("swc-workload")` on PATH. Reason: keeps the MCP and CLI
   concerns cleanly separated and matches how MCP servers typically wrap
   pre-existing tools.
 - **Graceful handling of missing CLI.** Server still starts if the CLI
@@ -73,4 +73,4 @@
 ## References
 
 - MCP Python SDK: https://github.com/modelcontextprotocol/python-sdk
-- swc_workload CLI repo: https://github.com/ctracey/swc-workload-cli
+- swc-workload CLI repo: https://github.com/ctracey/swc-workload-cli

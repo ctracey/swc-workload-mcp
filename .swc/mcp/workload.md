@@ -7,14 +7,12 @@
   - [x] 1.2. Create `swc_workload_mcp/` package skeleton (`__init__.py`, `__main__.py`)
   - [x] 1.3. Remove `.claude-plugin/plugin.json` and update `.gitignore` as needed
 
-- [ ] **2. Build the MCP server**
-  - [ ] 2.1. Subprocess bridge — resolve CLI (`SWC_WORKLOAD_BIN` env → PATH), invoke `swc_workload --json`, parse output
-  - [ ] 2.2. Error mapping — CLI non-zero exit + stderr → MCP tool error; missing CLI → actionable error pointing at swc-workload-cli
-  - [ ] 2.3. Define MCP tools, one per CLI op (`init`, `exists`, `list`, `find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`, `complete`, `move`)
+- [-] **2. Build the MCP server**
+  - [x] 2.1. Subprocess bridge + error handling — resolve CLI (`SWC_WORKLOAD_BIN` env → PATH), invoke `swc-workload --json`, parse output; named exceptions for missing CLI / non-zero exit / parse failure; includes automated tests for the bridge layer
+  - [ ] 2.3. Define MCP tools, one per CLI op (`init`, `exists`, `list`, `find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`, `complete`, `move`), mapping bridge exceptions to actionable MCP errors with hints
   - [ ] 2.4. Wire tools into the FastMCP server with stdio transport
 
 - [ ] **3. Tests for the MCP layer**
-  - [ ] 3.1. Wrapper unit tests — subprocess bridge + error mapping
   - [ ] 3.2. Tool-level tests — each tool exercised against a temp workload
   - [ ] 3.3. Protocol smoke test via the SDK's in-memory client
 
@@ -28,3 +26,8 @@
   - [ ] 5.1. Register the server in a real MCP client and confirm tools list
   - [ ] 5.2. Exercise `init` → `add` → `list` flow; verify `workload.json` matches CLI output
   - [ ] 5.3. Exercise an error path and confirm MCP error surfaces with a useful message
+
+- [ ] **6. Release automation & docs**
+  - [ ] 6.1. GitHub Actions pipeline for PR and main (lint, test)
+  - [ ] 6.2. Version sync — workflow to bump MCP service version, kept in sync with release tag
+  - [ ] 6.3. README badges, including a version-from-tag badge
