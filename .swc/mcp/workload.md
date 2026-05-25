@@ -8,8 +8,8 @@
   - [x] 1.3. Remove `.claude-plugin/plugin.json` and update `.gitignore` as needed
 
 - [ ] **2. Build the MCP server**
-  - [ ] 2.1. Subprocess bridge — invoke `bin/swc_workload --json` and parse output
-  - [ ] 2.2. Error mapping — CLI non-zero exit + stderr → MCP tool error
+  - [ ] 2.1. Subprocess bridge — resolve CLI (`SWC_WORKLOAD_BIN` env → PATH), invoke `swc_workload --json`, parse output
+  - [ ] 2.2. Error mapping — CLI non-zero exit + stderr → MCP tool error; missing CLI → actionable error pointing at swc-workload-cli
   - [ ] 2.3. Define MCP tools, one per CLI op (`init`, `exists`, `list`, `find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`, `complete`, `move`)
   - [ ] 2.4. Wire tools into the FastMCP server with stdio transport
 

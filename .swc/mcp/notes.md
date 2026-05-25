@@ -13,24 +13,38 @@
 
 ## Solution decisions
 
-- **Wrap the CLI, don't refactor it.** The MCP server invokes
-  `bin/swc_workload` as a subprocess with `--json` and parses the result.
-  Chosen because the CLI is already stable and well-tested; wrapping
-  preserves that, keeps the CLI dep-free, and avoids a larger refactor.
-- **Server name `swc-workload`; flat tool names.** MCP clients prefix tools
-  with the server name (e.g. `mcp__swc-workload__add`), so tools don't need
-  a redundant `workload_` prefix inside the server.
+- **CLI is an external dependency.** The `swc_workload` CLI lives in its
+  own repo (<https://github.com/ctracey/swc-workload-cli>) and is
+  installed independently. This repo ships only the MCP service. The
+  bridge resolves the CLI binary via `SWC_WORKLOAD_BIN` env var →
+  `shutil.which("swc_workload")` on PATH. Reason: keeps the MCP and CLI
+  concerns cleanly separated and matches how MCP servers typically wrap
+  pre-existing tools.
+- **Graceful handling of missing CLI.** Server still starts if the CLI
+  isn't found (so MCP clients can connect and see the error); a stderr
+  warning is logged on startup, and tool calls return a structured MCP
+  error pointing at the CLI repo. No raw `FileNotFoundError`.
+- **Wrap the CLI, don't import it.** The MCP server invokes the CLI as
+  a subprocess with `--json` and parses the result. Chosen because the
+  CLI is a separately-versioned external dependency; subprocess keeps
+  the boundary clean and means the MCP server has no knowledge of CLI
+  internals.
+- **Server name `swc-workload`; flat tool names.** MCP clients prefix
+  tools with the server name (e.g. `mcp__swc-workload__add`), so tools
+  don't need a redundant `workload_` prefix inside the server.
 - **Repo is reshaped from plugin → MCP service.** The Claude Code plugin
-  manifest is removed; project layout follows MCP service conventions
-  (`pyproject.toml` + `swc_workload_mcp/` package + `bin/` for the CLI).
+  manifest and the legacy in-repo CLI source are removed; project layout
+  follows MCP service conventions (`pyproject.toml` + `swc_workload_mcp/`
+  package).
 - **No automatic client registration.** README documents how to register
-  the server with an MCP client; the repo doesn't ship a config that does
-  it implicitly.
+  the server with an MCP client; the repo doesn't ship a config that
+  does it implicitly.
 - **Test scenarios are documented.** We automate what we reasonably can
-  (CLI tests stay; new MCP-layer tests cover the wrapper and the
-  CLI-error → MCP-error mapping). Anything not reasonably automatable —
-  e.g. real protocol round-trips with a live MCP client — is called out as
-  a manual verification step in the README and `pipeline.md`.
+  (bridge unit tests, tool-level tests against a temp workload, and a
+  protocol-level smoke test via the SDK's in-memory client). Anything
+  not reasonably automatable — e.g. real protocol round-trips with a
+  live MCP client — is called out as a manual verification step in the
+  README and `pipeline.md`.
 
 ## Open questions
 
@@ -47,6 +61,10 @@
   addition to tools. For now, scope is tools-only — workload browsing as
   a resource (e.g. expose `workload.json` to the client) can be revisited
   once the tool surface is in place.
+- **Version-compatibility check between MCP server and CLI.** No version
+  pinning or compatibility check today. If the CLI's `--json` contract
+  changes, the bridge breaks silently. Worth revisiting once both repos
+  have stable version numbers.
 
 ## Parked (intent phase)
 
@@ -55,5 +73,4 @@
 ## References
 
 - MCP Python SDK: https://github.com/modelcontextprotocol/python-sdk
-- Existing CLI: `bin/swc_workload`
-- Existing CLI tests: `tests/bin/`
+- swc_workload CLI repo: https://github.com/ctracey/swc-workload-cli
