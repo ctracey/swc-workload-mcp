@@ -9,7 +9,7 @@
 
 - [-] **2. Build the MCP server**
   - [x] 2.1. Subprocess bridge + error handling — resolve CLI (`SWC_WORKLOAD_BIN` env → PATH), invoke `swc-workload --json`, parse output; named exceptions for missing CLI / non-zero exit / parse failure; includes automated tests for the bridge layer
-  - [ ] 2.3. Define MCP tools, one per CLI op (`init`, `exists`, `list`, `find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`, `complete`, `move`), mapping bridge exceptions to actionable MCP errors with hints
+  - [x] 2.3. Define MCP tools, one per CLI op (`init`, `exists`, `list`, `find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`, `complete`, `move`), mapping bridge exceptions to actionable MCP errors with hints
   - [ ] 2.4. Wire tools into the FastMCP server with stdio transport
 
 - [ ] **3. Tests for the MCP layer**

@@ -41,7 +41,8 @@ swc-workload-mcp/
 ├── swc_workload_mcp/
 │   ├── __init__.py
 │   ├── __main__.py             # so `python -m swc_workload_mcp` works
-│   ├── server.py               # FastMCP server, tool definitions
+│   ├── server.py               # FastMCP server + tool registration (2.4)
+│   ├── tools.py                # one tool callable per CLI op + TOOLS registry
 │   └── bridge.py               # subprocess + --json wrapper, error mapping
 └── tests/
     └── mcp/                    # MCP server tests

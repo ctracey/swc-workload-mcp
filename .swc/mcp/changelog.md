@@ -39,3 +39,36 @@
 - Marked 2.1 done; parent work item 2 rolled up to `[-]`.
 - Motivation: ship the bridge layer that all future MCP tools (2.3, 2.4)
   will sit on top of.
+
+## Session — work item 2.3: define MCP tools `2026-05-25`
+
+- Delivered work item 2.3: added `swc_workload_mcp/tools.py` with 12
+  typed Python callables, one per CLI op (`init`, `exists`, `list`,
+  `find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`,
+  `complete`, `move`), plus a `TOOLS` registry for 2.4's server to
+  iterate over.
+- Each tool body is argv assembly plus `return _invoke(op, args)`. The
+  private `_invoke` helper centralises the three-way `BridgeError` →
+  `mcp.server.fastmcp.exceptions.ToolError` mapping with the message
+  content required by REQ-03 / REQ-04 / REQ-05. `_flag` and
+  `_bool_flag` keep optional-flag construction uniform.
+- Added `tests/mcp/test_tools.py` — 38 unit tests covering all 7
+  Gherkin scenarios plus per-op argv spot checks; bridge stubbed via
+  `monkeypatch.setattr(tools.bridge, "invoke", recorder)`. Full suite
+  47 passed (9 bridge + 38 tools), no regressions.
+- Per-op kwarg reference table in `specs.md` populated against CLI
+  v1.1.2 (derived from `swc-workload <op> --help`). `architecture.md`
+  folder structure updated to list `tools.py`.
+- Key shape decisions: `add` modelled as `placement` + `ref` (mirrors
+  the CLI's three positional forms); `move` modelled as `direction` +
+  optional `target`; `list`'s `no_ids` as `bool | None`; `list`
+  shadows the builtin intentionally (pattern B from solution.md).
+- Code review verdict PASS — 4 informational observations only, no
+  defects or tech debt.
+- Marked 2.3 done; parent work item 2 stays `[-]` (2.4 outstanding).
+- Note: the implementing agent's harness blocked its `summary.md`
+  write; orchestrator transcribed the agent's final report into
+  `summary.md` and re-verified the test results before recording.
+- Motivation: surface the workload operations as structured MCP tools
+  so 2.4 can register them against a FastMCP server and clients can
+  start calling them.
