@@ -123,3 +123,58 @@
   `placement="to" ref="1"` reportedly didn't land as a child); 3.2
   (planned next) will introduce the end-to-end test coverage needed
   to characterise and fix it cleanly.
+
+## Session — work item 3.2: tool-level integration tests + demo investigation `2026-05-26`
+
+- Delivered work item 3.2: ported all 77 behavioural scenarios from
+  the `swc-workload-cli` test suite into MCP-driven integration
+  tests under `tests/mcp/test_tools_integration_{authoring,io,status}.py`
+  plus a shared `conftest.py`. 70 effective tests + 7 explicit
+  `pytest.skip(reason=...)` (text-output × 3 / JSON-form collapse × 2 /
+  OSError-simulation × 1 / 5th-positional-impossible × 1).
+- Phase A (per `requirements.md`): bulk port + run + report. No
+  production-code changes. All 70 ported tests passed first time,
+  including the demo-bug-mirror `test_add_as_child_of_parent`. Code
+  review verdict PASS (4 info observations only, no defects).
+- Pass 2 — review feedback: swapped the test fixture from the
+  in-memory client/server harness
+  (`mcp.shared.memory.create_connected_server_and_client_session`)
+  to a session-scoped real-stdio session
+  (`mcp.client.stdio.stdio_client(StdioServerParameters(command=sys.executable, args=["-m", "swc_workload_mcp"]))`).
+  One server subprocess for the whole pytest run; per-test workload
+  isolation via `tmp_path`. `anyio_backend` promoted to session
+  scope. `mcpw` became sync; `mcpw_ready` stays async. No
+  test-body changes; same 77-scenario coverage, now through the
+  production transport. Runtime: 13s → 13.81s for the integration
+  files alone — one subprocess spawn amortised across 70 tests.
+- Live demo via MCP Inspector against the running production
+  server: 11 of 12 tools accepted first try. `add` produced the
+  demo discrepancy — `add(placement="to", ref="<hash>")` from
+  Inspector's form view landed at top level. Root cause: Inspector's
+  form serialiser sends nullable string optionals as JSON `null`
+  even when the form field has a value. Workaround: use Inspector's
+  raw-JSON input mode (the "format json" button) instead of the
+  per-field form view. After that, all 12 tools accepted.
+- Pass 2 fix (production code, folded into 3.2 instead of opening a
+  follow-up work item): de-nested the `ref` check inside
+  `swc_workload_mcp/tools.py::add` so `ref` always forwards when
+  set, even if `placement` is None. The CLI already had the right
+  validation (`"expected 'to <parent>' or 'at <position>' after
+  title; got 'X'"`, exit 1) — our tool was silently absorbing the
+  malformed argv into a valid top-level add before the CLI could
+  reject it. Added one unit test and one integration test guarding
+  the regression.
+- The CLI-mirroring test approach has a structural blind spot for
+  this category of bug — the CLI's positional argv can't represent
+  "ref without placement", so the CLI suite has no equivalent to
+  mirror. MCP's independent-optionals API surface can express the
+  invalid combination — hence the MCP-only test.
+- Final suite: **129 passed, 7 skipped, 0 failed in 15.13s** (127
+  after Pass 2 swap + 2 new tests for the `add` fix; no
+  regressions in the 57 baseline tests from 2.1/2.3/2.4).
+- Marked 3.2 done; parent 3 stays `[-]` (3.3 outstanding).
+- Motivation: ship comprehensive end-to-end coverage so the wired
+  service has a regression net the in-memory smoke (REQ-09 in 2.4)
+  couldn't provide on its own — and characterise the demo
+  discrepancy properly. The demo-driven walkthrough became the
+  acceptance test for the work item itself.

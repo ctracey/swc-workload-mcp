@@ -355,6 +355,19 @@ def test_add_tool_at_position(stub_bridge) -> None:
     assert recorder.calls == [("add", ["--workload", "/tmp/wl", "Foo", "at", "2"])]
 
 
+def test_add_tool_forwards_ref_even_when_placement_is_missing(stub_bridge) -> None:
+    """ref must reach the CLI even if placement is None — otherwise a buggy
+    or partial client (e.g. an MCP UI that nulls one optional but sets the
+    other) silently lands the item at top level instead of surfacing the
+    CLI's "expected 'to <parent>' or 'at <position>'" error.
+    """
+    recorder = stub_bridge(result={"id": "1"})
+
+    tools.add(workload="/tmp/wl", title="Foo", ref="1")
+
+    assert recorder.calls == [("add", ["--workload", "/tmp/wl", "Foo", "1"])]
+
+
 def test_rename_tool_argv(stub_bridge) -> None:
     recorder = stub_bridge(result={"ok": True})
 

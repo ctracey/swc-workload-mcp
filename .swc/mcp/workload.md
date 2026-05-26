@@ -12,8 +12,8 @@
   - [x] 2.3. Define MCP tools, one per CLI op (`init`, `exists`, `list`, `find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`, `complete`, `move`), mapping bridge exceptions to actionable MCP errors with hints
   - [x] 2.4. Wire tools into the FastMCP server with stdio transport
 
-- [ ] **3. Tests for the MCP layer**
-  - [ ] 3.2. Tool-level tests — each tool exercised against a temp workload
+- [-] **3. Tests for the MCP layer**
+  - [x] 3.2. Tool-level tests — each tool exercised against a temp workload
   - [ ] 3.3. Protocol smoke test via the SDK's in-memory client
 
 - [ ] **4. Rewrite the README**

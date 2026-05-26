@@ -182,8 +182,8 @@ def add(
     args = ["--workload", workload, title]
     if placement is not None:
         args.append(placement)
-        if ref is not None:
-            args.append(ref)
+    if ref is not None:
+        args.append(ref)
     return _invoke("add", args)
 
 
