@@ -55,11 +55,15 @@ swc-workload-mcp/
   <https://github.com/ctracey/swc-workload-cli>. The MCP service depends
   on `swc-workload` being available on PATH (or via `SWC_WORKLOAD_BIN`
   env var override) at runtime.
-- **Graceful degradation when CLI is missing.** On startup, the server
-  performs a `shutil.which` lookup and logs a warning to stderr if the
-  CLI is not found. The server still starts so MCP clients can connect.
-  Tool calls in that state return a structured MCP error pointing at the
-  CLI repo, not a raw `FileNotFoundError`.
+- **Fail-fast startup when the CLI is missing.** On startup, `server.main`
+  resolves the CLI via the bridge's `resolve_binary` (env var → PATH). If
+  resolution fails, the server prints an actionable stderr message
+  (*"swc-workload not found (searched: …). Install from
+  https://github.com/ctracey/swc-workload-cli or set SWC_WORKLOAD_BIN to
+  the binary path."*) and exits non-zero before `mcp.run()` is ever
+  called. There is no graceful-degradation mode — a half-working server
+  that lists tools but errors on every call is worse than a missing one,
+  because the failure is harder to diagnose from inside an MCP client.
 - **Server name:** `swc-workload`. MCP clients namespace tools by the
   server name automatically (e.g. `mcp__swc-workload__add` in Claude
   Code), so tool names are flat: `init`, `exists`, `list`, `find`,

@@ -7,10 +7,10 @@
   - [x] 1.2. Create `swc_workload_mcp/` package skeleton (`__init__.py`, `__main__.py`)
   - [x] 1.3. Remove `.claude-plugin/plugin.json` and update `.gitignore` as needed
 
-- [-] **2. Build the MCP server**
+- [x] **2. Build the MCP server**
   - [x] 2.1. Subprocess bridge + error handling — resolve CLI (`SWC_WORKLOAD_BIN` env → PATH), invoke `swc-workload --json`, parse output; named exceptions for missing CLI / non-zero exit / parse failure; includes automated tests for the bridge layer
   - [x] 2.3. Define MCP tools, one per CLI op (`init`, `exists`, `list`, `find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`, `complete`, `move`), mapping bridge exceptions to actionable MCP errors with hints
-  - [ ] 2.4. Wire tools into the FastMCP server with stdio transport
+  - [x] 2.4. Wire tools into the FastMCP server with stdio transport
 
 - [ ] **3. Tests for the MCP layer**
   - [ ] 3.2. Tool-level tests — each tool exercised against a temp workload

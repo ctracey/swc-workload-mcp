@@ -20,10 +20,16 @@
   `shutil.which("swc-workload")` on PATH. Reason: keeps the MCP and CLI
   concerns cleanly separated and matches how MCP servers typically wrap
   pre-existing tools.
-- **Graceful handling of missing CLI.** Server still starts if the CLI
-  isn't found (so MCP clients can connect and see the error); a stderr
-  warning is logged on startup, and tool calls return a structured MCP
-  error pointing at the CLI repo. No raw `FileNotFoundError`.
+- **Fail-fast startup when the CLI is missing.** Server exits non-zero
+  on startup if `swc-workload` cannot be resolved (env var → PATH),
+  with an actionable stderr message pointing at the CLI repo and the
+  `SWC_WORKLOAD_BIN` env-var override. `mcp.run()` is never invoked in
+  that path. Tool calls (when the server *is* running) still map the
+  bridge's `CLINotFoundError` to a structured MCP error pointing at the
+  CLI repo, but the startup check is what actually catches the missing
+  binary in practice. Reason: a half-working server that lists tools
+  but errors on every call is harder to diagnose inside an MCP client
+  than a clean startup failure.
 - **Wrap the CLI, don't import it.** The MCP server invokes the CLI as
   a subprocess with `--json` and parses the result. Chosen because the
   CLI is a separately-versioned external dependency; subprocess keeps

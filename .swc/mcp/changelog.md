@@ -72,3 +72,54 @@
 - Motivation: surface the workload operations as structured MCP tools
   so 2.4 can register them against a FastMCP server and clients can
   start calling them.
+
+## Session — work item 2.4: FastMCP server + stdio wiring `2026-05-26`
+
+- Delivered work item 2.4: added `swc_workload_mcp/server.py` —
+  module-level `FastMCP("swc-workload")` + tool-registration loop
+  over `tools.TOOLS` + `main()` doing a fail-fast CLI presence check
+  via `bridge.resolve_binary()` (on `CLINotFoundError`, prints the
+  actionable stderr message and `SystemExit(1)`; on success, runs
+  `mcp.run("stdio")`).
+- Replaced the `__main__.py` `NotImplementedError` placeholder with
+  a thin delegation to `server.main()`. Both `python -m
+  swc_workload_mcp` and the `swc-workload-mcp` console script now
+  reach the same entry point.
+- Promoted `bridge._resolve_binary` to public `bridge.resolve_binary`
+  — single source of truth for binary resolution shared by the
+  startup check and per-tool `invoke`. No behavioural change.
+- Added `tests/mcp/test_server.py` — 10 unit tests (one per Gherkin
+  scenario) including a REQ-09 end-to-end smoke that boots the server
+  in-memory via `mcp.shared.memory.create_connected_server_and_client_session`
+  and invokes `init` against the real CLI to assert `workload.json`
+  lands on disk. Smoke fails loudly when the CLI isn't installed, per
+  the solution-design call to keep the signal sharp. Full suite: 57
+  passed.
+- **Flipped the startup decision from graceful degradation → fail-fast.**
+  The user called for this during requirements; `.swc/mcp/architecture.md`
+  and `.swc/mcp/notes.md` were rewritten to match (REQ-08). The actionable
+  stderr template (binary name, searched paths, install URL, env-var
+  override) is shared with the tool-layer error mapping in `tools.py`.
+- Created `docs/architecture.md` — public-facing architecture overview
+  (MCP intro, ASCII layer diagram, per-layer detail, startup behaviour).
+  Linked from the new README; full client-registration matrix stays
+  for work item 4.
+- Refine: 5 info findings from code review. Pass 2 resolved F-03
+  (REQ-01 assertion `issubset` → `==`) and F-04 (REQ-03 positive guard
+  tightened to a regex matching `for ... in tools.TOOLS`). Deferred
+  to `.swc/mcp/tech-debt.md`: F-01 (duplicated "not found" message
+  template between `server.py` and `tools.py`), F-02 (registration at
+  module import time — documented trade-off), F-05 (folds into F-01).
+- Focused README rewrite to support the MCP Inspector demo —
+  intentional partial-scope pull from work item 4 because the prior
+  README still described the removed Claude Code plugin layout. Work
+  item 4 will expand with the full client-registration matrix,
+  badges, and version-sync details.
+- Marked 2.4 done; parent work item 2 rolled up to `[x]` — all of
+  phase 2 complete.
+- Motivation: stand the service up end-to-end at the process level so
+  MCP clients can actually launch it, list tools, and exercise them.
+  Demo via Inspector surfaced a possible tool-layer bug (`add` with
+  `placement="to" ref="1"` reportedly didn't land as a child); 3.2
+  (planned next) will introduce the end-to-end test coverage needed
+  to characterise and fix it cleanly.

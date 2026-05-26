@@ -27,3 +27,24 @@
 **Location:** `README.md`, `.swc/mcp/pipeline.md`
 **Description:** README still references the removed plugin layout (e.g. `bin/swc_workload`). Pipeline `## Build` doesn't mention venv activation.
 **Accepted because:** accepted during delivery of 2.1 — README rewrite is tracked as work item 4; pipeline doc tightening belongs in the CI/docs work items.
+
+## [work item 2.4] — F-01: actionable "not found" message template duplicated between server.py and tools.py — 2026-05-25
+
+**Severity:** info
+**Location:** `swc_workload_mcp/server.py:68-73` and `swc_workload_mcp/tools.py:73-77`
+**Description:** The "swc-workload not found (searched: …). Install from <repo> or set SWC_WORKLOAD_BIN to the binary path." template is hand-written in two places — once in `server.main()` for the startup fail-fast path, once in `tools._invoke()`'s `CLINotFoundError` branch. `CLI_REPO_URL` is also defined in both modules. If the wording, URL, or env-var name ever changes, both have to be edited in lockstep — silent drift risk until a user sees two slightly different messages from the same tool.
+**Accepted because:** accepted during delivery of 2.4 — the bridge layer is the natural owner. Resolve by either giving `CLINotFoundError.__str__` the install hint directly, or adding a `bridge.actionable_not_found_message(exc)` helper that both call sites consume. Defer until either message drifts or a related bridge change makes the refactor cheap.
+
+## [work item 2.4] — F-02: tool registration runs at module import time — 2026-05-25
+
+**Severity:** info
+**Location:** `swc_workload_mcp/server.py:50`
+**Description:** `_register_tools()` is invoked at module import, so importing `swc_workload_mcp.server` for any reason materialises all 12 tool registrations. Documented as a deliberate decision in `context.md` (lets unit tests inspect registered tools without invoking `main()`). The trade-off is that import-time side effects couple module load to FastMCP state and there is no longer a single function where "the server is built".
+**Accepted because:** accepted during delivery of 2.4 — works fine today and is documented. Revisit when the module grows additional responsibilities (e.g. resource registration, lifecycle hooks); at that point, move registration into `main()` (before the resolve_binary call) and expose a `build_server() -> FastMCP` factory for tests.
+
+## [work item 2.4] — F-05: CLINotFoundError empty-searched-paths sentinel formatted in two places — 2026-05-25
+
+**Severity:** info
+**Location:** `swc_workload_mcp/bridge.py:50-54` and `swc_workload_mcp/server.py:68`
+**Description:** `CLINotFoundError.__init__` already handles the empty-list case by formatting `<none>` into its message. `server.main()` re-implements the same `<none>` formatting to build its own message — second place that knows about the sentinel.
+**Accepted because:** accepted during delivery of 2.4 — folds into F-01's resolution. If the message template moves to the bridge, this disappears naturally. No standalone action needed.

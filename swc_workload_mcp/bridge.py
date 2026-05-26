@@ -23,6 +23,7 @@ __all__ = [
     "CLIExecutionError",
     "CLIResponseError",
     "invoke",
+    "resolve_binary",
 ]
 
 CLI_BINARY_NAME = "swc-workload"
@@ -96,11 +97,21 @@ def _truncate(text: str) -> str:
     return text[:_STDOUT_TRUNCATION_LIMIT] + "..."
 
 
-def _resolve_binary() -> str:
+def resolve_binary() -> str:
     """Resolve the CLI binary path.
 
     Returns the path to use for ``subprocess.run``. Raises
     :class:`CLINotFoundError` if no usable binary is found.
+
+    Resolution order:
+
+    1. ``SWC_WORKLOAD_BIN`` env var — if set, must point at an
+       executable file or :class:`CLINotFoundError` is raised.
+    2. ``shutil.which("swc-workload")`` — first match on ``PATH``.
+
+    This is the single source of truth for binary resolution: the
+    server's startup presence check (work item 2.4) and per-tool
+    invocations (via :func:`invoke`) both use it.
     """
     env_value = os.environ.get(ENV_VAR)
     if env_value:
@@ -141,7 +152,7 @@ def invoke(op: str, args: list[str]) -> Any:
     CLIResponseError
         If the CLI exits 0 but stdout is not valid JSON.
     """
-    binary = _resolve_binary()
+    binary = resolve_binary()
     argv = [binary, op, *args, "--json"]
 
     completed = subprocess.run(
