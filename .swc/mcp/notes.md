@@ -54,12 +54,15 @@
 
 ## Open questions
 
-- **MCP test depth.** Direct calls against the tool functions catch
-  wrapper logic but skip the protocol layer. An in-process MCP client
-  doing real protocol round-trips is closer to "tested it works
-  end-to-end" but heavier. Resolution likely: direct-call unit tests
-  for the wrapper + one or two protocol-level smoke tests via the SDK's
-  in-memory client.
+- **MCP test depth.** *(Resolved 2026-05-26.)* Original plan was
+  wrapper unit tests (shipped in 2.3) + an in-memory protocol smoke
+  test (planned for 3.3). 3.2 raised the bar to a real-stdio
+  subprocess fixture per review feedback, exercising every tool
+  end-to-end through the production transport. That is a strict
+  superset of what 3.3 was scoped to cover, so 3.3 was marked done
+  with this rationale rather than implemented. The live Inspector
+  walkthrough during 3.2's review added independent protocol-layer
+  confidence via a real MCP client.
 
 ## Deferred decisions
 
