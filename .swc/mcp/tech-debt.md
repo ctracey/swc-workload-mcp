@@ -48,3 +48,31 @@
 **Location:** `swc_workload_mcp/bridge.py:50-54` and `swc_workload_mcp/server.py:68`
 **Description:** `CLINotFoundError.__init__` already handles the empty-list case by formatting `<none>` into its message. `server.main()` re-implements the same `<none>` formatting to build its own message — second place that knows about the sentinel.
 **Accepted because:** accepted during delivery of 2.4 — folds into F-01's resolution. If the message template moves to the bridge, this disappears naturally. No standalone action needed.
+
+## [work item 6.1] — F-01: CLI dev dependency is unpinned (tracks HEAD) — 2026-05-27
+
+**Severity:** warn
+**Location:** `pyproject.toml` — `[project.optional-dependencies].dev` entry `swc-workload @ git+https://github.com/ctracey/swc-workload-cli.git`
+**Description:** The CLI is declared as a dev dependency via a bare git URL with no `@<ref>` suffix, so every `pip install -e ".[dev]"` (locally and in CI) pulls whatever is at the default branch HEAD of the CLI repo. A breaking change merged to `ctracey/swc-workload-cli` will start failing PRs here with no commit in this repo to point at. CI is also non-reproducible across reruns — a rerun on the same SHA can yield a different result.
+**Accepted because:** intentional during delivery of 6.1 — CI and local dev should validate against the CLI's latest `main` so breakage surfaces here as soon as it ships, rather than being masked by a stale pin. Revisit once the CLI has stable releases worth pinning to; until then, unexplained `integration`/`e2e` failures should first be checked against recent CLI commits.
+
+## [work item 6.1] — F-02: GitHub Actions are major-tag-pinned, not SHA-pinned — 2026-05-27
+
+**Severity:** info
+**Location:** `.github/workflows/ci.yml:19`, `.github/workflows/ci.yml:22` (and duplicates in `integration` / `e2e` jobs)
+**Description:** `actions/checkout@v4` and `actions/setup-python@v5` are pinned to a mutable major-version tag. A supply-chain compromise or a regression in a re-published minor would silently affect this workflow. SHA-pinning is the OpenSSF-recommended posture for third-party actions.
+**Accepted because:** accepted during delivery of 6.1 — current threat model treats major-tag pins of first-party `actions/*` as good enough. Revisit if Dependabot for `github-actions` is later adopted, or if the workflow consumes third-party actions outside the `actions/*` namespace.
+
+## [work item 6.1] — F-03: jobs have no `timeout-minutes` — 2026-05-27
+
+**Severity:** info
+**Location:** `.github/workflows/ci.yml` — all three jobs
+**Description:** None of the three jobs set `timeout-minutes`, so a hung step (network stall during `pipx install`, deadlocked stdio test, runaway subprocess) falls back to GitHub's 360-minute default. The current suite runs in ~15s locally; a 5–10 minute cap would catch genuine hangs early without false positives on slow runners.
+**Accepted because:** accepted during delivery of 6.1 — small change, never bitten yet. Add `timeout-minutes: 10` to each job the next time `ci.yml` is edited.
+
+## [work item 6.1] — F-05: `_isolate_env` duplicated across `unit/test_server.py` and `e2e/test_smoke.py` — 2026-05-27
+
+**Severity:** info
+**Location:** `tests/mcp/unit/test_server.py:26`, `tests/mcp/e2e/test_smoke.py:29`
+**Description:** Both files carry an identical autouse `_isolate_env` fixture (delete `SWC_WORKLOAD_BIN`, set `PATH=/nonexistent`). Deliberate per solution.md and context.md — the two files live in different tier folders and there is no shared conftest at `tests/mcp/` any more.
+**Accepted because:** accepted during delivery of 6.1 — intentional duplication. Flagged so a future reader doesn't refactor it back into a shared conftest without understanding the tier-isolation reason. If a third tier file ends up needing the same fixture, revisit a small shared helper module (`tests/mcp/_shared.py`, imported explicitly) rather than a conftest.

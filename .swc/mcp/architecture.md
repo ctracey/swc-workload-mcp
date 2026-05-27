@@ -46,6 +46,9 @@ swc-workload-mcp/
 │   └── bridge.py               # subprocess + --json wrapper, error mapping
 └── tests/
     └── mcp/                    # MCP server tests
+        ├── unit/               # fast, no CLI required (bridge, tools, server)
+        ├── integration/        # in-process MCP client → real CLI subprocess
+        └── e2e/                # end-to-end smoke through the running server
 ```
 
 ## Decisions

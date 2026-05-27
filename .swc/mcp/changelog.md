@@ -178,3 +178,47 @@
   couldn't provide on its own — and characterise the demo
   discrepancy properly. The demo-driven walkthrough became the
   acceptance test for the work item itself.
+
+## Session — deliver 6.1 (CI + tier restructure + uv dev workflow) `2026-05-27`
+
+- Restructured `tests/mcp/` into three tier folders — `unit/`,
+  `integration/`, `e2e/` — using `git mv` to preserve history. The
+  integration-only `conftest.py` moved into `tests/mcp/integration/`
+  so its fixtures can't leak into unit/e2e tiers. The REQ-09 smoke
+  was extracted from `test_server.py` into `tests/mcp/e2e/test_smoke.py`.
+  Suite totals unchanged: 129 passed, 7 skipped.
+- Added `.python-version` at repo root pinned to `3.14.5` (verified
+  latest stable against python.org). CI and local dev both read from
+  it via `actions/setup-python`'s `python-version-file:` input —
+  single source of truth.
+- Added `.github/workflows/ci.yml` — three independent jobs (`unit`,
+  `integration`, `e2e`), each appearing as its own check in the PR
+  Checks panel. Triggers: `pull_request` against `main` and `push` to
+  `main`. Workflow-level `concurrency:` cancels in-flight runs on the
+  same ref. Single Python from `.python-version`, single OS
+  (`ubuntu-latest`).
+- Added the `swc-workload` CLI as a dev dependency in
+  `pyproject.toml` (git URL). `pip install -e ".[dev]"` (locally with
+  `uv` or in CI) now installs the CLI into the venv at
+  `.venv/bin/swc-workload`, removing the need for a separate `pipx`
+  step in CI and the PATH-juggling that local devs would otherwise
+  hit. `uv.lock` is gitignored — intentional, consistent with the
+  "CI tests against CLI HEAD" decision.
+- Rewrote README sections: Install now uses `uv venv` +
+  `uv pip install -e ".[dev]"`; Prerequisites clarifies the CLI is
+  auto-installed for dev (only needs separate install for production
+  deployment); Tests documents the three tiers and per-tier
+  invocation via `uv run pytest tests/mcp/<tier>`.
+- Updated `architecture.md` folder-structure diagram to reflect the
+  new tier layout.
+- Five code-review findings deferred to `tech-debt.md`: F-01
+  (unpinned CLI dev-dep — intentional, tracks HEAD), F-02 (action
+  major-tag pins vs SHA pins), F-03 (no `timeout-minutes` on jobs),
+  F-05 (deliberate `_isolate_env` duplication across `unit/` and
+  `e2e/`). F-04 (implicit pipx runner contract) was deleted from
+  tech-debt — no longer applies after the pipx step was removed.
+- Marked 6.1 done; parent 6 stays `[-]` (6.2 and 6.3 outstanding).
+- Motivation: lay the CI foundation for the remaining release-
+  automation work items (6.2 version sync, 6.3 README badges), and
+  fix the local-dev friction where contributors hit "swc-workload
+  not found" errors after a fresh clone.

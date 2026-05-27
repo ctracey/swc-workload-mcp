@@ -25,26 +25,44 @@ errors with actionable hints.
 
 ## Prerequisites
 
-- **Python ≥ 3.10**
-- **The `swc-workload` CLI** installed and on `PATH`. See
-  <https://github.com/ctracey/swc-workload-cli> for install
-  instructions. You can also point at an explicit binary via the
-  `SWC_WORKLOAD_BIN` environment variable.
+- **Python ≥ 3.10** (the local dev setup pins `3.14.5` via
+  `.python-version`).
+- **The `swc-workload` CLI** must be resolvable on `PATH` (or via
+  `SWC_WORKLOAD_BIN`) at runtime. For local development the
+  [Install](#install) step installs it into the venv automatically.
+  For production deployment, install it separately from
+  <https://github.com/ctracey/swc-workload-cli>.
 
 The server fails fast at startup if the CLI cannot be resolved.
 
 ## Install
 
+Local development uses [`uv`](https://github.com/astral-sh/uv) for
+the venv and dependency install. `uv` reads the Python version from
+`.python-version` (currently `3.14.5`) and installs the
+`swc-workload` CLI into the venv alongside `pytest`, so a separate
+system-wide CLI install isn't required for development.
+
 ```sh
 git clone https://github.com/ctracey/swc-workload-mcp.git
 cd swc-workload-mcp
-python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
+
+# install uv if you don't have it (macOS):
+brew install uv
+# or platform-agnostic:
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+
+uv venv
+uv pip install -e ".[dev]"
 ```
 
-The editable install gives you both the `swc-workload-mcp` console
-script and the `swc_workload_mcp` Python module, plus the `pytest`
-test dependency.
+That gives you:
+
+- `.venv/bin/swc-workload-mcp` — the MCP server entry point
+- `.venv/bin/swc-workload` — the CLI, installed as a dev dependency
+  from <https://github.com/ctracey/swc-workload-cli>
+- The `swc_workload_mcp` Python module (editable install)
+- `pytest` for the test suite
 
 ## Try it with MCP Inspector
 
@@ -118,18 +136,43 @@ to the binary path.
 
 ## Tests
 
+The suite is organised into three tiers under `tests/mcp/`, one
+folder per tier:
+
+| Tier | Folder | Needs `swc-workload` CLI? | What it covers |
+| --- | --- | --- | --- |
+| Unit | `tests/mcp/unit/` | No | Bridge, tools, and server wiring against stubs |
+| Integration | `tests/mcp/integration/` | **Yes** | All 12 tools end-to-end through a real MCP server subprocess and the real CLI |
+| E2E | `tests/mcp/e2e/` | **Yes** | In-memory smoke of `init` through the wired FastMCP → tools → bridge → CLI chain |
+
+The integration and e2e tiers **fail loudly** (not skip) if the CLI
+isn't resolvable — that's deliberate, so a missing CLI is never
+mistaken for a green run.
+
+### Running the suite
+
+After `uv pip install -e ".[dev]"` (see [Install](#install)), the CLI
+lives at `.venv/bin/swc-workload`, so all three tiers can run without
+any additional setup:
+
 ```sh
-.venv/bin/pytest
+# everything
+uv run pytest
+
+# one tier at a time
+uv run pytest tests/mcp/unit
+uv run pytest tests/mcp/integration
+uv run pytest tests/mcp/e2e
 ```
 
-Runs the full suite including:
+If you'd rather invoke pytest directly, `.venv/bin/pytest` works
+equivalently — `uv run` just guarantees the venv is current first.
 
-- Bridge unit tests (real subprocesses against a parameterised Python
-  stub).
-- Tool wrapper unit tests (each of the 12 tools, bridge stubbed).
-- Server tests, including an end-to-end smoke that boots the server
-  in-memory and invokes `init` against a real `swc-workload`
-  subprocess.
+### What CI runs
 
-The end-to-end smoke fails loudly if `swc-workload` isn't installed —
-it's there precisely to verify the wired chain works.
+`.github/workflows/ci.yml` runs the same three tiers as three
+independent jobs on every PR against `main` and every push to `main`.
+All three jobs do `pip install -e ".[dev]"` (which pulls in the CLI
+for the `integration` and `e2e` jobs by virtue of the dev-deps
+declaration). Python comes from `.python-version`; runner is
+`ubuntu-latest` only.

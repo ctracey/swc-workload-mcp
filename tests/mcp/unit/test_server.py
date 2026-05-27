@@ -2,29 +2,20 @@
 
 Each test corresponds to a Gherkin scenario in
 `.swc/mcp/workitems/2.4/specs.md`. The unit tests monkeypatch
-`mcp.run()` so the stdio loop is never entered. REQ-09 is an end-to-end
-smoke test that goes through the SDK's in-memory client/server harness
-against the real ``swc-workload`` CLI — it fails loudly (not skips) if
-the CLI isn't installed, per solution.md.
+`mcp.run()` so the stdio loop is never entered. The REQ-09 end-to-end
+smoke test (real CLI through the in-memory client/server harness) lives
+in ``tests/mcp/e2e/test_smoke.py``.
 """
 
 from __future__ import annotations
 
-import json
 import re
-import shutil
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from swc_workload_mcp import bridge
-
-
-# Captured at import time, before any test fixture overrides PATH. The
-# REQ-09 smoke test uses this to invoke the real CLI even though the
-# autouse `_isolate_env` fixture clears PATH for the unit tests.
-_REAL_CLI_PATH = shutil.which("swc-workload")
 
 
 # ---------------------------------------------------------------------------
@@ -318,62 +309,3 @@ def test_server_source_does_not_call_shutil_which() -> None:
     assert "shutil.which" not in source, (
         "server.py must not call shutil.which directly — reuse bridge.resolve_binary"
     )
-
-
-# ---------------------------------------------------------------------------
-# REQ-09 — end-to-end smoke through the running server via in-memory client
-# ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def anyio_backend() -> str:
-    """Force anyio's pytest plugin to use asyncio (single backend)."""
-    return "asyncio"
-
-
-@pytest.mark.anyio
-async def test_init_through_server_creates_workload_json(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """End-to-end smoke: `init` via the running FastMCP server creates a workload.
-
-    Per solution.md, this test FAILS LOUDLY (does not skip) if the
-    ``swc-workload`` CLI isn't on PATH — the test exists precisely to
-    verify the wired-up chain works against the real CLI.
-    """
-    if _REAL_CLI_PATH is None:
-        pytest.fail(
-            "swc-workload CLI must be installed to run the end-to-end smoke; "
-            "this test verifies the happy path through FastMCP → tools → "
-            "bridge → CLI."
-        )
-
-    # The autouse `_isolate_env` fixture wiped PATH; point the bridge at
-    # the real CLI captured at import time.
-    monkeypatch.setenv("SWC_WORKLOAD_BIN", _REAL_CLI_PATH)
-
-    from mcp.shared.memory import create_connected_server_and_client_session
-
-    from swc_workload_mcp import server
-
-    workload_dir = tmp_path / "workload"
-    workload_dir.mkdir()
-
-    async with create_connected_server_and_client_session(
-        server.mcp._mcp_server
-    ) as session:
-        result = await session.call_tool(
-            "init", {"workload": str(workload_dir)}
-        )
-
-    assert not result.isError, f"init tool returned error: {result.content}"
-
-    workload_json = workload_dir / "workload.json"
-    assert workload_json.exists(), (
-        f"workload.json was not created at {workload_json}"
-    )
-
-    # Parses as JSON and looks like a workload (CLI contract).
-    parsed = json.loads(workload_json.read_text())
-    assert isinstance(parsed, dict), "workload.json must be a JSON object"
