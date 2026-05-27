@@ -258,3 +258,30 @@
   `gh workflow run release.yml -f bump=patch` (or one click in the
   Actions tab) — no version-string editing by hand, no risk of
   pyproject + `__init__.py` drifting out of sync.
+
+## Session — deliver 6.3 (README badges) `2026-05-27`
+
+- Added three README badges at the top, mirroring the swc-workload-cli
+  layout:
+  - `Python` — static `>=3.10` (matches our `requires-python` in
+    `pyproject.toml`; we don't want to surface the stricter
+    `.python-version` pin since consumers care about what's
+    supported, not what we develop against).
+  - `License` — static `MIT`.
+  - `Version` — dynamic, sourced from GitHub tags matching `v*` via
+    `img.shields.io/github/v/tag/ctracey/swc-workload-mcp`. Will
+    populate as soon as `release.yml` (from 6.2) cuts the first
+    `vX.Y.Z` tag.
+- Skipped CI badge for parity with the CLI's README (which doesn't
+  have one).
+- Skipped the swc delivery workflow per user direction — 6.3 is a
+  tiny, single-file docs change; bundled into PR #3 (the open 6.2
+  PR) since the version badge only becomes useful once 6.2's release
+  workflow exists.
+- Marked 6.3 done. Parent 6 rolls to `[x]` — all sub-items
+  (6.1/6.2/6.3) are now done. The mcp workload now has only sections
+  4 and 5 remaining (`Rewrite the README`, `End-to-end verification`).
+- Motivation: complete the release-automation section with the
+  outward-facing piece — anyone landing on the README now sees the
+  package version (and supported Python + license) at a glance, the
+  same as the CLI repo.
