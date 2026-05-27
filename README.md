@@ -213,3 +213,104 @@ Each job sets up Python (from `.python-version`), sets up `uv`
 (via `astral-sh/setup-uv`), then runs `make install` followed by
 `make test-<tier>` — the exact same targets you'd run locally. Runner
 is `ubuntu-latest` only.
+
+## Releases
+
+How a release works in this repo, how to cut one, and what you get
+(and don't get).
+
+### What a release is here
+
+A release is mostly bookkeeping plus a tag — there are no built
+Python artifacts attached today. Each release produces:
+
+- A bumped version in `swc_workload_mcp/_version.py` (single source
+  of truth).
+- A commit on `main` authored as `github-actions[bot]`, titled
+  `Release vX.Y.Z`.
+- A git tag `vX.Y.Z` (pushed alongside the commit).
+- A [GitHub Release](https://github.com/ctracey/swc-workload-mcp/releases)
+  for the tag, with auto-generated changelog (`vX.Y.Z-1...vX.Y.Z`).
+  GitHub auto-attaches `Source code (zip)` and `Source code (tar.gz)`
+  to every Release — these are just `git archive`-style snapshots of
+  the tree at the tag, not built wheels.
+- The running MCP server reports the new version via the MCP
+  `initialize` handshake's `serverInfo.version` field, which clients
+  like the Inspector and Claude Code/Desktop display on connection.
+
+### Cutting a release
+
+The release workflow is `.github/workflows/release.yml`. It's
+triggered manually via `workflow_dispatch` with a `bump` choice
+(`patch`, `minor`, `major`):
+
+```sh
+gh workflow run release.yml -f bump=patch    # 0.1.0 → 0.1.1
+gh workflow run release.yml -f bump=minor    # 0.1.0 → 0.2.0
+gh workflow run release.yml -f bump=major    # 0.1.0 → 1.0.0
+```
+
+Or from the GitHub UI: *Actions* tab → *Release* → *Run workflow* →
+choose the bump → *Run workflow*.
+
+Behind the scenes, the workflow:
+
+1. Checks out `main` with full git history.
+2. Reads the current version from `swc_workload_mcp/_version.py`.
+3. Bumps the selected semver component and writes it back to that
+   same file (no other files need editing — `pyproject.toml` reads
+   the version dynamically via Hatchling).
+4. Commits the change as `github-actions[bot]` with message
+   `Release vX.Y.Z`.
+5. Creates an annotated tag `vX.Y.Z` and pushes both the commit and
+   the tag.
+6. Creates a GitHub Release via
+   [`softprops/action-gh-release`](https://github.com/softprops/action-gh-release)
+   with auto-generated release notes.
+
+End-to-end takes about 10 seconds.
+
+### Constraints
+
+- The job only runs when triggered against `main` — there's a guard
+  `if: github.ref == 'refs/heads/main'` on the job. Dispatching from a
+  feature branch is a no-op.
+- The workflow needs `contents: write` permission on the default
+  `GITHUB_TOKEN`. Already declared at the workflow level.
+- Python version comes from `.python-version` (same as CI and local
+  dev), so the bump script runs on the same interpreter you develop
+  against.
+
+### Installing a tagged version
+
+There's no PyPI publish step (deliberately out of scope at v0.1.x),
+so install directly from the git URL pinned to the tag:
+
+```sh
+# editable install (development)
+uv pip install -e "git+https://github.com/ctracey/swc-workload-mcp.git@v0.1.1"
+
+# or from system pip
+pip install "git+https://github.com/ctracey/swc-workload-mcp.git@v0.1.1"
+```
+
+Once installed, `swc-workload-mcp --help` confirms the version, and
+the MCP server reports the same version to any client that connects.
+
+### What's intentionally NOT in a release today
+
+- **No pre-built Python wheel or sdist** attached to the GitHub
+  Release.
+- **No PyPI publish** — `pip install swc-workload-mcp` won't work
+  until/unless we add a publish step.
+- **No Docker image.**
+
+To add real installable artifacts later, extend `release.yml`:
+
+- **Wheel attached to the Release:** add a `hatch build` step after
+  the bump, then pass `files: dist/*` to
+  `softprops/action-gh-release`.
+- **PyPI publish:** add
+  [`pypa/gh-action-pypi-publish`](https://github.com/pypa/gh-action-pypi-publish)
+  after the build, using trusted publishing (no API tokens to
+  manage).
