@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swc-workload-mcp"
+version = "0.1.0"
+description = "MCP server wrapping the swc-workload CLI for AI agents."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "swc-workload @ git+https://github.com/ctracey/swc-workload-cli.git",
+]
+
+[project.scripts]
+swc-workload-mcp = "swc_workload_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["swc_workload_mcp*"]
+exclude = ["tests*"]
