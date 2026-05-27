@@ -27,7 +27,7 @@
   - [ ] 5.2. Exercise `init` → `add` → `list` flow; verify `workload.json` matches CLI output
   - [ ] 5.3. Exercise an error path and confirm MCP error surfaces with a useful message
 
-- [-] **6. Release automation & docs**
+- [x] **6. Release automation & docs**
   - [x] 6.1. GitHub Actions pipeline for PR and main (lint, test)
-  - [ ] 6.2. Version sync — workflow to bump MCP service version, kept in sync with release tag
-  - [ ] 6.3. README badges, including a version-from-tag badge
+  - [x] 6.2. Version sync — workflow to bump MCP service version, kept in sync with release tag
+  - [x] 6.3. README badges, including a version-from-tag badge

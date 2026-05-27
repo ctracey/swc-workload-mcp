@@ -26,6 +26,7 @@ import sys
 from mcp.server.fastmcp import FastMCP
 
 from . import bridge, tools
+from ._version import __version__
 
 
 SERVER_NAME = "swc-workload"
@@ -34,6 +35,11 @@ CLI_REPO_URL = "https://github.com/ctracey/swc-workload-cli"
 
 
 mcp = FastMCP(SERVER_NAME)
+# FastMCP doesn't expose `version` on its constructor; set it on the
+# underlying low-level Server so MCP's `initialize` handshake returns
+# our package version in the serverInfo block. Clients (Inspector,
+# Claude Code, Claude Desktop) display this.
+mcp._mcp_server.version = __version__
 
 
 def _register_tools() -> None:

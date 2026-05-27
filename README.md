@@ -1,5 +1,9 @@
 # swc-workload-mcp
 
+![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/github/v/tag/ctracey/swc-workload-mcp?filter=v*&label=version)
+
 A standalone [Model Context Protocol](https://modelcontextprotocol.io)
 server that wraps the
 [`swc-workload`](https://github.com/ctracey/swc-workload-cli) CLI so

@@ -216,6 +216,23 @@ def test_fastmcp_instance_name_is_swc_workload() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Server version is surfaced via the MCP initialize handshake serverInfo
+# ---------------------------------------------------------------------------
+
+
+def test_server_version_is_set_on_low_level_server() -> None:
+    """FastMCP's constructor doesn't expose `version`, so server.py sets
+    it on the underlying low-level Server. Pin this so a future SDK
+    refactor that renames `_mcp_server` or `version` doesn't silently
+    revert to a missing serverInfo.version field in the handshake.
+    """
+    from swc_workload_mcp import server
+    from swc_workload_mcp._version import __version__
+
+    assert server.mcp._mcp_server.version == __version__
+
+
+# ---------------------------------------------------------------------------
 # REQ-05 — exactly 12 tools registered with the right flat names
 # ---------------------------------------------------------------------------
 
