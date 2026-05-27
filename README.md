@@ -38,7 +38,8 @@ The server fails fast at startup if the CLI cannot be resolved.
 ## Install
 
 Local development uses [`uv`](https://github.com/astral-sh/uv) for
-the venv and dependency install. `uv` reads the Python version from
+the venv and dependency install, wrapped by a `Makefile` so common
+workflows are one command. `uv` reads the Python version from
 `.python-version` (currently `3.14.5`) and installs the
 `swc-workload` CLI into the venv alongside `pytest`, so a separate
 system-wide CLI install isn't required for development.
@@ -52,17 +53,20 @@ brew install uv
 # or platform-agnostic:
 # curl -LsSf https://astral.sh/uv/install.sh | sh
 
-uv venv
-uv pip install -e ".[dev]"
+make install
 ```
 
-That gives you:
+`make install` is shorthand for `uv venv && uv pip install -e ".[dev]"`.
+It gives you:
 
 - `.venv/bin/swc-workload-mcp` — the MCP server entry point
 - `.venv/bin/swc-workload` — the CLI, installed as a dev dependency
   from <https://github.com/ctracey/swc-workload-cli>
 - The `swc_workload_mcp` Python module (editable install)
 - `pytest` for the test suite
+
+Run `make help` at any time to see all the project commands
+(`install`, `test`, `test-unit`, `test-integration`, `test-e2e`, `dev`).
 
 ## Try it with MCP Inspector
 
@@ -82,16 +86,44 @@ server up to a full client like Claude Code or Claude Desktop.
 From the repo root, with the venv created above:
 
 ```sh
-npx @modelcontextprotocol/inspector .venv/bin/python -m swc_workload_mcp
+make dev
 ```
 
-That command:
+That target runs `npx @modelcontextprotocol/inspector uv run swc-workload-mcp`,
+which:
 
-1. Pulls and runs the Inspector via `npx`.
-2. Spawns our MCP server (`python -m swc_workload_mcp`) as a child
-   process that the Inspector communicates with over stdio.
+1. Pulls and runs the Inspector via `npx` (Node's fetch-and-run; no
+   global install needed).
+2. Spawns our MCP server via `uv run swc-workload-mcp` as a child
+   process. `uv run` activates the project venv first so the server
+   can find its bundled `swc-workload` CLI on `PATH`.
 3. Opens the Inspector UI in your browser (default
    <http://localhost:6274/>) and prints the URL to the terminal.
+
+### What's actually running
+
+Once you launch, there are **two long-running processes** (plus a
+short-lived one per tool call):
+
+```
+Browser (you)
+   │  HTTP/WebSocket
+   ▼
+[Inspector — Node]                  ← long-running; hosts the UI on :6274
+   │                                  and acts as an MCP client
+   │  stdio (MCP JSON-RPC)
+   ▼
+[swc-workload-mcp — Python]         ← long-running; speaks MCP, doesn't
+   │                                  open a port of its own
+   │  subprocess.run("swc-workload …")
+   ▼
+[swc-workload — Python]             ← ephemeral, one per tool invocation
+```
+
+The MCP server uses **stdio transport** — no network port — which is
+the same way real MCP clients like Claude Code and Claude Desktop will
+launch it in production. The Inspector is just acting as a test
+client with a browser UI on top.
 
 ### What to look at
 
@@ -122,7 +154,7 @@ To see the missing-CLI error path, point at a non-existent binary:
 
 ```sh
 SWC_WORKLOAD_BIN=/nonexistent npx @modelcontextprotocol/inspector \
-  .venv/bin/python -m swc_workload_mcp
+  uv run swc-workload-mcp
 ```
 
 The server will exit non-zero on startup; the Inspector surfaces the
@@ -151,28 +183,29 @@ mistaken for a green run.
 
 ### Running the suite
 
-After `uv pip install -e ".[dev]"` (see [Install](#install)), the CLI
-lives at `.venv/bin/swc-workload`, so all three tiers can run without
-any additional setup:
+After `make install` (see [Install](#install)), the CLI lives at
+`.venv/bin/swc-workload`, so all three tiers can run without any
+additional setup:
 
 ```sh
 # everything
-uv run pytest
+make test
 
 # one tier at a time
-uv run pytest tests/mcp/unit
-uv run pytest tests/mcp/integration
-uv run pytest tests/mcp/e2e
+make test-unit
+make test-integration
+make test-e2e
 ```
 
-If you'd rather invoke pytest directly, `.venv/bin/pytest` works
-equivalently — `uv run` just guarantees the venv is current first.
+Each `make test*` target is a thin wrapper around `uv run pytest [path]`
+— invoke pytest directly via `.venv/bin/pytest` or `uv run pytest` if
+you need flags the Makefile doesn't expose.
 
 ### What CI runs
 
 `.github/workflows/ci.yml` runs the same three tiers as three
 independent jobs on every PR against `main` and every push to `main`.
-All three jobs do `pip install -e ".[dev]"` (which pulls in the CLI
-for the `integration` and `e2e` jobs by virtue of the dev-deps
-declaration). Python comes from `.python-version`; runner is
-`ubuntu-latest` only.
+Each job sets up Python (from `.python-version`), sets up `uv`
+(via `astral-sh/setup-uv`), then runs `make install` followed by
+`make test-<tier>` — the exact same targets you'd run locally. Runner
+is `ubuntu-latest` only.
