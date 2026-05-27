@@ -58,3 +58,46 @@
 - **Note:** `swc_workload_mcp.egg-info/` (left over from the old
   setuptools install) was deleted at the start of the rebuild. It was
   already gitignored so no commit churn.
+
+## Pass 2 — 2026-05-27 (follow-up: surface version via MCP initialize)
+
+- **Trigger:** user asked how to expose the MCP service version to
+  clients. The right answer per MCP convention is the `initialize`
+  handshake's `serverInfo` block — `name` plus `version`. Today our
+  server sets `name="swc-workload"` but `version` was unset (the
+  low-level `Server` defaults to `None`), so clients (Inspector,
+  Claude Code) see an empty version field on connection.
+- **Decision:** wire `_version.__version__` into the low-level
+  Server's `version` attribute. FastMCP's `__init__` doesn't accept
+  `version` (verified by inspecting its signature) — only `name`,
+  `instructions`, `website_url`, `icons` are exposed. The low-level
+  `mcp.server.lowlevel.Server` does take `version=...` in its
+  constructor, and FastMCP holds it as `mcp._mcp_server`. So we set
+  it after construction: `mcp._mcp_server.version = __version__`.
+- **Decision:** add a unit test in
+  `tests/mcp/unit/test_server.py` —
+  `test_server_version_is_set_on_low_level_server` — pinning this
+  wiring. Reason: we reach a "private" attribute (`_mcp_server`); if
+  the SDK ever renames it or restructures, our handshake would
+  silently lose `version` again. The test catches that immediately.
+- **Decision:** not a new MCP tool. Tools are for client-invoked
+  operations; the version belongs in the handshake metadata that
+  clients already display. Adding a `version` tool would be
+  redundant and non-conventional.
+- **Decision:** bundle into 6.2's open PR (#3) rather than a new
+  work item, since the change is 2 source lines + 1 test and
+  conceptually completes "version sync" — without surfacing it, the
+  single source of truth has no observable effect on the client.
+- **Verification:** `make test` → 130 passed (was 129), 7 skipped.
+  The new test asserts
+  `server.mcp._mcp_server.version == _version.__version__`.
+- **Verification:** spot-check via
+  `python -c "from swc_workload_mcp.server import mcp;
+  print(mcp._mcp_server.version)"` prints `0.1.0`. Will surface in
+  the `initialize` handshake's `serverInfo.version` field that MCP
+  clients consume.
+- **Tech debt seed:** if/when FastMCP adds `version` to its public
+  constructor, replace the `mcp._mcp_server.version = ...` line with
+  the constructor kwarg and drop the inline comment. Not worth
+  filing as tech debt yet — it's a 2-line cleanup keyed to an
+  external API change.

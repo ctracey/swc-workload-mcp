@@ -9,6 +9,17 @@
 - `swc_workload_mcp/__init__.py` — rewired to re-export from
   `_version.py` via `from ._version import __version__`. Module
   docstring kept; explicit `__all__ = ["__version__"]` added.
+- `swc_workload_mcp/server.py` — imports `__version__` from
+  `_version.py` and sets it on `mcp._mcp_server.version` so MCP's
+  `initialize` handshake returns the package version in the
+  `serverInfo` block. Inspector and Claude Code/Desktop display this
+  on connection. FastMCP's high-level constructor doesn't expose
+  `version`, so we reach the low-level `Server` directly — documented
+  inline.
+- `tests/mcp/unit/test_server.py` — new
+  `test_server_version_is_set_on_low_level_server` pinning the
+  `_mcp_server.version` wiring so a future SDK refactor that renames
+  the private attr can't silently regress the handshake.
 
 **Build config:**
 
@@ -53,8 +64,12 @@ spot-checks of the new wiring.
 - `python -c "import swc_workload_mcp; print(swc_workload_mcp.__version__)"`
   prints `0.1.0` — confirming the re-export through `__init__.py`
   works.
-- `make test` → **129 passed, 7 skipped in 15.39s** — matches
-  baseline exactly. No regressions from the build-backend swap.
+- `make test` → **130 passed, 7 skipped in 14.33s** — one more
+  passing test than the 6.1 baseline (the new
+  `test_server_version_is_set_on_low_level_server`). No regressions.
+- Spot-check via `python -c "from swc_workload_mcp.server import mcp;
+  print(mcp._mcp_server.version)"` prints `0.1.0` — confirms the
+  handshake will carry the version.
 - `release.yml` validated by parsing with PyYAML — four top-level
   keys, valid shape. (The `on:` key showing up as `True` in the
   parsed dict is YAML 1.1's `on/off/yes/no` boolean coercion;
