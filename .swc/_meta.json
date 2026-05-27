@@ -1,5 +1,7 @@
 {
   "workloads": {
-    "mcp": "mcp"
+    "mcp": "mcp",
+    "version-sync": "mcp",
+    "docs/inspector-uv": "mcp"
   }
 }

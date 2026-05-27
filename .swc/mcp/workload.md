@@ -29,5 +29,5 @@
 
 - [-] **6. Release automation & docs**
   - [x] 6.1. GitHub Actions pipeline for PR and main (lint, test)
-  - [ ] 6.2. Version sync — workflow to bump MCP service version, kept in sync with release tag
+  - [x] 6.2. Version sync — workflow to bump MCP service version, kept in sync with release tag
   - [ ] 6.3. README badges, including a version-from-tag badge

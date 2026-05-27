@@ -222,3 +222,39 @@
   automation work items (6.2 version sync, 6.3 README badges), and
   fix the local-dev friction where contributors hit "swc-workload
   not found" errors after a fresh clone.
+
+## Session — deliver 6.2 (version sync workflow + Hatchling switch) `2026-05-27`
+
+- Mirrored swc-workload-cli's release pattern: single source of truth
+  for the version (`swc_workload_mcp/_version.py`), Hatchling build
+  backend, `dynamic = ["version"]` in `pyproject.toml`, manual
+  `workflow_dispatch` release workflow that bumps the version
+  (patch/minor/major), commits as `github-actions[bot]`, tags
+  `vX.Y.Z`, pushes both, and creates a GitHub Release with auto-
+  generated notes via `softprops/action-gh-release@v2`.
+- Two intentional divergences from the CLI's workflow: the version
+  file path (`swc_workload_mcp/_version.py`) and
+  `python-version-file: .python-version` instead of hardcoded
+  `python-version: "3.12"` so release stays in lockstep with our CI.
+- One Hatchling-specific opt-in needed that the CLI doesn't need:
+  `[tool.hatch.metadata] allow-direct-references = true` because our
+  dev deps include the CLI itself as a git URL (`swc-workload @
+  git+...`). Inline-commented in `pyproject.toml`.
+- `swc_workload_mcp/__init__.py` rewired from `__version__ =
+  "0.1.0"` (literal) to `from ._version import __version__` plus
+  `__all__ = ["__version__"]`. `swc_workload_mcp.__version__` keeps
+  working for any consumer.
+- Verified clean rebuild via uv: `pip install -e ".[dev]"` reports
+  `swc-workload-mcp==0.1.0` (Hatchling read the version file
+  correctly); import test prints `0.1.0`; `make test` → 129 passed,
+  7 skipped — matches baseline exactly.
+- The release workflow itself wasn't exercised in this work item
+  (would cut a real release). Correctness rests on verbatim parity
+  with CLI's working `release.yml`, clean YAML parse, and the bump
+  script using only stdlib (`os`, `re`, `pathlib`).
+- Marked 6.2 done; parent 6 stays `[-]` (6.3 outstanding).
+- Motivation: lay the manual-release foundation so when a maintainer
+  wants to cut v0.1.1 / v0.2.0 / etc., it's a single
+  `gh workflow run release.yml -f bump=patch` (or one click in the
+  Actions tab) — no version-string editing by hand, no risk of
+  pyproject + `__init__.py` drifting out of sync.
