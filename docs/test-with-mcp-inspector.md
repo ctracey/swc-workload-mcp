@@ -1,4 +1,4 @@
-# Try it with MCP Inspector
+# Test with MCP Inspector
 
 [MCP Inspector](https://github.com/modelcontextprotocol/inspector) is
 the SDK team's interactive UI for poking at MCP servers — list tools,
