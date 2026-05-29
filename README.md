@@ -27,7 +27,9 @@ errors with actionable hints.
 ## Documentation
 
 - [Architecture](docs/architecture.md) — layer-by-layer design.
-- [Usage](docs/usage.md) — prerequisites, install, and releases.
-- [Development](docs/development.md) — dev environment, tests, and CI.
+- [Usage](docs/usage.md) — register the server with an MCP client
+  (Claude Code) and confirm it's working.
+- [Development](docs/development.md) — prerequisites, install, tests,
+  CI, and the release workflow.
 - [Try with MCP Inspector](docs/try-with-mcp-inspector.md) — interactive
   end-to-end smoke test with the SDK's Inspector UI.

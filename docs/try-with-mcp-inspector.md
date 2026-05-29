@@ -8,7 +8,7 @@ server up to a full client like Claude Code or Claude Desktop.
 
 ## Prerequisites
 
-- A working dev install (see [Install](usage.md#install)).
+- A working dev install (see [Install](development.md#install)).
 - **Node.js ≥ 18** (Inspector ships as an npm package; `npx` fetches
   it on first run — no global install needed).
 
