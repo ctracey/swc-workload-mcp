@@ -31,5 +31,5 @@ errors with actionable hints.
   (Claude Code) and confirm it's working.
 - [Development](docs/development.md) — prerequisites, install, tests,
   CI, and the release workflow.
-- [Try with MCP Inspector](docs/try-with-mcp-inspector.md) — interactive
+- [Test with MCP Inspector](docs/test-with-mcp-inspector.md) — interactive
   end-to-end smoke test with the SDK's Inspector UI.

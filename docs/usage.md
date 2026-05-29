@@ -66,4 +66,4 @@ In a fresh Claude Code session started inside the repo:
    is mapping CLI failures correctly.
 
 For a more interactive way to poke at the server (independent of any
-client), see [Try with MCP Inspector](try-with-mcp-inspector.md).
+client), see [Test with MCP Inspector](test-with-mcp-inspector.md).
