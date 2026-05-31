@@ -1,4 +1,4 @@
-# swc-workload-mcp
+# swc-workload MCP Server
 
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
@@ -6,9 +6,12 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Version](https://img.shields.io/github/v/tag/ctracey/swc-workload-mcp?filter=v*&label=version)
 
+This MCP Server works with [Sessionless Workload Context (SWC)](https://github.com/ctracey/swc),
+to extract workload management for more efficient token usage with [SWC Workflows](https://github.com/ctracey/swc/blob/main/docs/usage.md#using-the-workflows).
+
 A standalone [Model Context Protocol](https://modelcontextprotocol.io)
 server that wraps the
-[`swc-workload`](https://github.com/ctracey/swc-workload-cli) CLI so
+[`swc-workload CLI`](https://github.com/ctracey/swc-workload-cli) so
 MCP-aware AI agents (Claude Code, Claude Desktop, and other MCP
 clients) can manage workload trees via structured tool invocations
 instead of shelling out and parsing CLI output.
