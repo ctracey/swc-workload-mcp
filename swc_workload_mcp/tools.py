@@ -64,9 +64,10 @@ _StrList = builtins.list[str]
 def _invoke(op: str, args: _StrList) -> Any:
     """Call the bridge and map ``BridgeError`` subclasses to ``ToolError``.
 
-    Every tool body delegates to this helper. Centralising the mapping
-    keeps tool bodies to argv assembly + a single call, satisfying the
-    thin-wrapper invariant (REQ-08).
+    Every tool body delegates to this helper (or :func:`_invoke_text`
+    for ops that want the CLI's raw text output). Centralising the
+    mapping keeps tool bodies to argv assembly + a single call,
+    satisfying the thin-wrapper invariant (REQ-08).
     """
     try:
         return bridge.invoke(op, args)
@@ -84,6 +85,26 @@ def _invoke(op: str, args: _StrList) -> Any:
             f"swc-workload {op} returned unparseable output "
             f"(truncated): {exc.truncated_stdout}. "
             f"Likely a CLI/MCP version mismatch."
+        ) from exc
+
+
+def _invoke_text(op: str, args: _StrList) -> str:
+    """Like :func:`_invoke` but returns the CLI's raw stdout text.
+
+    Only the not-found and non-zero-exit failures apply here — the
+    text path never tries to parse JSON, so ``CLIResponseError``
+    cannot fire.
+    """
+    try:
+        return bridge.invoke_text(op, args)
+    except bridge.CLINotFoundError as exc:
+        raise ToolError(
+            f"swc-workload not found (searched: {', '.join(exc.searched_paths)}). "
+            f"Install from {CLI_REPO_URL} or set SWC_WORKLOAD_BIN to the binary path."
+        ) from exc
+    except bridge.CLIExecutionError as exc:
+        raise ToolError(
+            f"swc-workload {op} failed (exit {exc.exit_code}): {exc.stderr.strip()}"
         ) from exc
 
 
@@ -135,6 +156,7 @@ def list(  # noqa: A001 — intentional shadowing of builtin, see module docstri
     filter: str | None = None,  # noqa: A002 — matches CLI flag name
     exclude: str | None = None,
     no_ids: bool | None = None,
+    json: bool | None = None,
 ) -> Any:
     """Display the workload tree, optionally scoped to a ref and filtered.
 
@@ -143,6 +165,8 @@ def list(  # noqa: A001 — intentional shadowing of builtin, see module docstri
     - ``filter`` / ``exclude`` — ``key:val[,val…]`` filter expressions
       (supported keys: ``status``).
     - ``no_ids`` — hide hash IDs from output (shown by default).
+    - ``json`` — when true, return the parsed JSON tree. Default is the
+      CLI's human-readable tree render (string).
     """
     args = ["--workload", workload]
     args += _flag("filter", filter)
@@ -150,7 +174,9 @@ def list(  # noqa: A001 — intentional shadowing of builtin, see module docstri
     args += _bool_flag("no-ids", no_ids)
     if ref is not None:
         args.append(ref)
-    return _invoke("list", args)
+    if json:
+        return _invoke("list", args)
+    return _invoke_text("list", args)
 
 
 def find(workload: str, keyword: str) -> Any:

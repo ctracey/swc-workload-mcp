@@ -80,7 +80,7 @@ async def test_resolve_by_number(mcpw_ready):
     await call_tool("add", workload=w, title="a", placement="to", ref="2")
     await call_tool("add", workload=w, title="b", placement="to", ref="2")
 
-    result = await call_tool("list", workload=w, ref="2")
+    result = await call_tool("list", workload=w, ref="2", json=True)
     assert result.error is None, result.error
     items = result.payload["items"]
     assert items[0]["number"] == "2"
@@ -98,10 +98,10 @@ async def test_resolve_by_hash_id(mcpw_ready):
     await call_tool("add", workload=w, title="target")
     await call_tool("add", workload=w, title="a", placement="to", ref="2")
 
-    listed = (await call_tool("list", workload=w)).payload["items"]
+    listed = (await call_tool("list", workload=w, json=True)).payload["items"]
     target_id = listed[1]["id"]
 
-    result = await call_tool("list", workload=w, ref=target_id)
+    result = await call_tool("list", workload=w, ref=target_id, json=True)
     assert result.error is None
     items = result.payload["items"]
     assert items[0]["id"] == target_id
@@ -115,7 +115,7 @@ async def test_reference_not_found(mcpw_ready):
     w = str(workload)
 
     await call_tool("add", workload=w, title="one")
-    result = await call_tool("list", workload=w, ref="9.9")
+    result = await call_tool("list", workload=w, ref="9.9", json=True)
     assert result.error is not None
     assert "not found" in result.error.lower()
 
@@ -129,19 +129,27 @@ async def test_reference_not_found(mcpw_ready):
 async def test_list_renders_full_tree_with_symbols(mcpw_ready):
     """Mirrors: tests/bin/test_swc-workload_io.py::test_list_renders_full_tree_with_symbols
 
-    The CLI test asserts on the human-readable rendering with status
-    glyphs (``✔``, ``▣``). The bridge always passes ``--json``, so
-    glyphs aren't reachable through the MCP layer. The structural
-    equivalent — that the items appear at the right places with the
-    right statuses — is already covered by every other ``list``-based
-    test in this file (and by ``test_list_json_is_parseable_tree``).
-    Skip explicitly per solution.md.
+    Default ``list`` returns the CLI's human-readable rendering with
+    status glyphs (``✔`` done, ``▣`` in-progress). Reachable now that
+    ``list`` defaults to text output.
     """
-    pytest.skip(
-        "Text-output rendering (status glyphs) is unreachable through MCP: "
-        "the bridge always invokes the CLI with --json. Structural status "
-        "checks are covered by every other list-based test in this file."
-    )
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="done item")
+    await call_tool("add", workload=w, title="wip item")
+    await call_tool("add", workload=w, title="open item")
+    await call_tool("complete", workload=w, ref="1")
+    await call_tool("start", workload=w, ref="2")
+
+    result = await call_tool("list", workload=w)
+    assert result.error is None
+    text = result.payload
+    assert isinstance(text, str)
+    assert "✔" in text
+    assert "▣" in text
+    for title in ("done item", "wip item", "open item"):
+        assert title in text
 
 
 # ---------------------------------------------------------------------------
@@ -161,7 +169,7 @@ async def test_list_filter_status_in_progress(mcpw_ready):
     await call_tool("complete", workload=w, ref="1")
     await call_tool("start", workload=w, ref="2")
 
-    result = await call_tool("list", workload=w, filter="status:in-progress")
+    result = await call_tool("list", workload=w, filter="status:in-progress", json=True)
     assert result.error is None
     items = result.payload["items"]
     titles = [i["title"] for i in items]
@@ -182,7 +190,7 @@ async def test_list_exclude_status_done(mcpw_ready):
     await call_tool("complete", workload=w, ref="1")
     await call_tool("start", workload=w, ref="2")
 
-    result = await call_tool("list", workload=w, exclude="status:done")
+    result = await call_tool("list", workload=w, exclude="status:done", json=True)
     assert result.error is None
     items = result.payload["items"]
     titles = [i["title"] for i in items]
@@ -207,7 +215,7 @@ async def test_list_with_ref_renders_item_with_children(mcpw_ready):
     await call_tool("add", workload=w, title="kid-a", placement="to", ref="2")
     await call_tool("add", workload=w, title="kid-b", placement="to", ref="2")
 
-    result = await call_tool("list", workload=w, ref="2")
+    result = await call_tool("list", workload=w, ref="2", json=True)
     assert result.error is None
     items = result.payload["items"]
     assert items[0]["title"] == "parent"
@@ -230,7 +238,7 @@ async def test_list_with_ref_and_filter_scopes_to_subtree(mcpw_ready):
     await call_tool("add", workload=w, title="c", placement="to", ref="1")
     await call_tool("start", workload=w, ref="1.2")
 
-    result = await call_tool("list", workload=w, ref="1", filter="status:in-progress")
+    result = await call_tool("list", workload=w, ref="1", filter="status:in-progress", json=True)
     assert result.error is None, result.error
     items = result.payload["items"]
     assert len(items) == 1
@@ -301,7 +309,7 @@ async def test_list_json_is_parseable_tree(mcpw_ready):
     await call_tool("add", workload=w, title="b")
     await call_tool("add", workload=w, title="b1", placement="to", ref="2")
 
-    result = await call_tool("list", workload=w)
+    result = await call_tool("list", workload=w, json=True)
     assert result.error is None
     payload = result.payload
     items = payload["items"]
@@ -318,24 +326,48 @@ async def test_list_json_is_parseable_tree(mcpw_ready):
 async def test_list_without_json_is_text(mcpw_ready):
     """Mirrors: tests/bin/test_swc-workload_io.py::test_list_without_json_is_text
 
-    Skipped per solution.md: the bridge always passes ``--json``, so the
-    "text output" form is not reachable through the MCP layer.
+    Default ``list`` (no ``json=True``) returns the CLI's human-readable
+    tree render as a string — not parseable JSON.
     """
-    pytest.skip(
-        "Bridge always passes --json; text-output form unreachable through MCP."
-    )
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="a")
+    await call_tool("add", workload=w, title="b")
+
+    result = await call_tool("list", workload=w)
+    assert result.error is None
+    # In text mode the conftest helper falls back to passing the raw
+    # stdout through as the payload (non-JSON-decodable on success).
+    assert isinstance(result.payload, str)
+    assert "a" in result.payload
+    assert "b" in result.payload
+    # The tree render is plainly not the JSON envelope.
+    assert not result.payload.lstrip().startswith("{")
 
 
 @pytest.mark.anyio
 async def test_text_output_includes_hash_next_to_title(mcpw_ready):
     """Mirrors: tests/bin/test_swc-workload_io.py::test_text_output_includes_hash_next_to_title
 
-    Skipped per solution.md: text output (hash beside title in the
-    rendered tree) is not reachable through MCP — JSON only.
+    The default text render shows each item's hash ID alongside the
+    title. Reachable now that ``list`` defaults to text output.
     """
-    pytest.skip(
-        "Bridge always passes --json; text-output form unreachable through MCP."
-    )
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="alpha")
+
+    # Pull the assigned hash via the JSON form, then look for it in
+    # the text render.
+    listed = (await call_tool("list", workload=w, json=True)).payload["items"]
+    item_id = listed[0]["id"]
+
+    result = await call_tool("list", workload=w)
+    assert result.error is None
+    assert isinstance(result.payload, str)
+    assert item_id in result.payload
+    assert "alpha" in result.payload
 
 
 # ---------------------------------------------------------------------------
@@ -357,7 +389,7 @@ async def test_load_workload_rejects_malformed_shape(mcpw_ready):
     malformed = {"items": [{"id": "abc1234", "title": "broken", "children": []}]}
     seed(malformed)
 
-    result = await call_tool("list", workload=w)
+    result = await call_tool("list", workload=w, json=True)
     assert result.error is not None
     msg = result.error.lower()
     assert "workload.json" in msg or "invalid" in msg
@@ -375,7 +407,7 @@ async def test_load_workload_rejects_top_level_non_dict(mcpw_ready):
 
     seed(["not", "a", "dict"])
 
-    result = await call_tool("list", workload=w)
+    result = await call_tool("list", workload=w, json=True)
     assert result.error is not None
     msg = result.error.lower()
     assert "invalid" in msg or "workload.json" in msg
@@ -392,7 +424,7 @@ async def test_load_workload_json_decode_error_reports_line_and_column(mcpw_read
 
     seed('{"items": [')  # truncated JSON
 
-    result = await call_tool("list", workload=w)
+    result = await call_tool("list", workload=w, json=True)
     assert result.error is not None
     msg = result.error.lower()
     assert "workload.json invalid" in msg
@@ -445,7 +477,7 @@ async def test_op_on_missing_workload_recommends_init(mcpw):
     call_tool, workload, _wlj, _seed = mcpw
     w = str(workload)
 
-    result = await call_tool("list", workload=w)
+    result = await call_tool("list", workload=w, json=True)
     assert result.error is not None
     assert "init" in result.error.lower()
 
@@ -461,7 +493,7 @@ async def test_workload_folder_does_not_exist_errors_clearly(mcpw, tmp_path: Pat
     call_tool, _workload, _wlj, _seed = mcpw
 
     missing = tmp_path / "no-such-folder"
-    result = await call_tool("list", workload=str(missing))
+    result = await call_tool("list", workload=str(missing), json=True)
     assert result.error is not None
     msg = result.error.lower()
     assert "does not exist" in msg
@@ -475,7 +507,7 @@ async def test_workload_pointed_at_a_file_errors_clearly(mcpw, tmp_path: Path):
 
     f = tmp_path / "not-a-folder.json"
     f.write_text("{}")
-    result = await call_tool("list", workload=str(f))
+    result = await call_tool("list", workload=str(f), json=True)
     assert result.error is not None
     msg = result.error.lower()
     assert "folder" in msg
@@ -634,13 +666,13 @@ async def test_all_digit_hash_id_resolves_to_item_not_path(mcpw_ready):
     await call_tool("add", workload=w, title="target")
     await call_tool("add", workload=w, title="third")
 
-    listed = (await call_tool("list", workload=w)).payload["items"]
+    listed = (await call_tool("list", workload=w, json=True)).payload["items"]
     target_id = listed[1]["id"]
 
     # Use the assigned hash as the ref. The contract: list-by-id
     # returns the right item regardless of whether the ID's character
     # set happens to overlap with the dotted-path syntax.
-    result = await call_tool("list", workload=w, ref=target_id)
+    result = await call_tool("list", workload=w, ref=target_id, json=True)
     assert result.error is None
     items = result.payload["items"]
     assert items[0]["id"] == target_id
@@ -656,7 +688,7 @@ async def test_numeric_path_still_resolves_when_no_id_matches(mcpw_ready):
     await call_tool("add", workload=w, title="first")
     await call_tool("add", workload=w, title="second")
 
-    result = await call_tool("list", workload=w, ref="2")
+    result = await call_tool("list", workload=w, ref="2", json=True)
     assert result.error is None
     items = result.payload["items"]
     assert items[0]["title"] == "second"

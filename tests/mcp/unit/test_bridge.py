@@ -285,3 +285,77 @@ def test_cli_response_error_truncates_long_stdout(
     assert truncated.endswith("...")
     # 500 chars + 3 char ellipsis marker
     assert len(truncated) == 503
+
+
+# ---------------------------------------------------------------------------
+# invoke_text — alternate entry point that does NOT append --json and
+# returns raw stdout text (used by the list tool's default text mode).
+# ---------------------------------------------------------------------------
+
+
+def test_invoke_text_does_not_append_json_flag(
+    stub_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from swc_workload_mcp import bridge
+
+    stub = _write_stub(stub_dir)
+    argv_record = stub_dir / "argv.json"
+    monkeypatch.setenv("SWC_WORKLOAD_BIN", str(stub))
+    monkeypatch.setenv("STUB_STDOUT", "tree render\n")
+    monkeypatch.setenv("STUB_RECORD_ARGV", str(argv_record))
+
+    bridge.invoke_text("list", ["--workload", "/tmp/w"])
+
+    recorded = json.loads(argv_record.read_text())
+    assert recorded == [str(stub), "list", "--workload", "/tmp/w"]
+    assert "--json" not in recorded
+
+
+def test_invoke_text_returns_raw_stdout_string(
+    stub_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from swc_workload_mcp import bridge
+
+    stub = _write_stub(stub_dir)
+    monkeypatch.setenv("SWC_WORKLOAD_BIN", str(stub))
+    monkeypatch.setenv("STUB_STDOUT", "• 1 a\n• 2 b\n")
+
+    result = bridge.invoke_text("list", [])
+
+    assert result == "• 1 a\n• 2 b\n"
+
+
+def test_invoke_text_non_zero_exit_raises_cli_execution_error(
+    stub_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from swc_workload_mcp import bridge
+
+    stub = _write_stub(stub_dir)
+    monkeypatch.setenv("SWC_WORKLOAD_BIN", str(stub))
+    monkeypatch.setenv("STUB_EXIT", "2")
+    monkeypatch.setenv("STUB_STDERR", "workload not initialised\n")
+
+    with pytest.raises(bridge.CLIExecutionError) as excinfo:
+        bridge.invoke_text("list", [])
+
+    assert excinfo.value.exit_code == 2
+    assert "workload not initialised" in excinfo.value.stderr
+
+
+def test_invoke_text_does_not_parse_stdout(
+    stub_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Raw text mode must not raise CLIResponseError on non-JSON stdout."""
+    from swc_workload_mcp import bridge
+
+    stub = _write_stub(stub_dir)
+    monkeypatch.setenv("SWC_WORKLOAD_BIN", str(stub))
+    monkeypatch.setenv("STUB_STDOUT", "not json {{{")
+
+    result = bridge.invoke_text("list", [])
+
+    assert result == "not json {{{"

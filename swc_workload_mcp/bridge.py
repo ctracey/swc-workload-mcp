@@ -1,9 +1,15 @@
 """Subprocess bridge to the `swc-workload` CLI.
 
-Resolves the CLI binary (env var override → PATH lookup), invokes it as
-a subprocess with `--json`, and returns parsed JSON output. Three named
-exceptions surface the failure modes for the MCP tool layer to map
-into structured tool errors.
+Resolves the CLI binary (env var override → PATH lookup) and invokes
+it as a subprocess. Two entry points are provided:
+
+- :func:`invoke` appends ``--json`` and returns the parsed JSON object.
+- :func:`invoke_text` does not append ``--json`` and returns the raw
+  stdout string (used by the ``list`` tool's default text output, which
+  mirrors the CLI's tree-rendered format).
+
+Three named exceptions surface the failure modes for the MCP tool
+layer to map into structured tool errors.
 
 This module is a thin pass-through — no per-op knowledge, no business
 logic.
@@ -23,6 +29,7 @@ __all__ = [
     "CLIExecutionError",
     "CLIResponseError",
     "invoke",
+    "invoke_text",
     "resolve_binary",
 ]
 
@@ -126,6 +133,26 @@ def resolve_binary() -> str:
     raise CLINotFoundError([CLI_BINARY_NAME])
 
 
+def _run(argv: list[str]) -> str:
+    """Run ``argv`` and return stdout on success, raising on failures.
+
+    Shared by :func:`invoke` and :func:`invoke_text`. The two differ
+    only in whether ``--json`` is in ``argv`` and how stdout is then
+    interpreted.
+    """
+    completed = subprocess.run(
+        argv,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    if completed.returncode != 0:
+        raise CLIExecutionError(completed.returncode, completed.stderr)
+
+    return completed.stdout
+
+
 def invoke(op: str, args: list[str]) -> Any:
     """Invoke ``swc-workload <op> <args> --json`` and return parsed JSON.
 
@@ -153,19 +180,32 @@ def invoke(op: str, args: list[str]) -> Any:
         If the CLI exits 0 but stdout is not valid JSON.
     """
     binary = resolve_binary()
-    argv = [binary, op, *args, "--json"]
-
-    completed = subprocess.run(
-        argv,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if completed.returncode != 0:
-        raise CLIExecutionError(completed.returncode, completed.stderr)
+    stdout = _run([binary, op, *args, "--json"])
 
     try:
-        return json.loads(completed.stdout)
+        return json.loads(stdout)
     except json.JSONDecodeError as exc:
-        raise CLIResponseError(completed.stdout) from exc
+        raise CLIResponseError(stdout) from exc
+
+
+def invoke_text(op: str, args: list[str]) -> str:
+    """Invoke ``swc-workload <op> <args>`` and return raw stdout text.
+
+    Same plumbing as :func:`invoke` but without ``--json`` — used to
+    obtain the CLI's human-readable output (e.g. the ``list`` tool's
+    tree render).
+
+    Returns
+    -------
+    str
+        Raw stdout emitted by the CLI.
+
+    Raises
+    ------
+    CLINotFoundError
+        If the CLI binary cannot be resolved.
+    CLIExecutionError
+        If the CLI exits with a non-zero code.
+    """
+    binary = resolve_binary()
+    return _run([binary, op, *args])
