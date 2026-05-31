@@ -24,7 +24,7 @@
 - [-] **5. End-to-end verification**
   - [x] 5.1. Register the server in a real MCP client and confirm tools list
   - [x] 5.2. Exercise `init` → `add` → `list` flow; verify `workload.json` matches CLI output
-  - [ ] 5.3. Exercise an error path and confirm MCP error surfaces with a useful message
+  - [x] 5.3. Exercise an error path and confirm MCP error surfaces with a useful message
   - [x] 5.4. MCP-client registration instructions
   - [ ] 5.5. Maintain formatting for `list` tool
 
