@@ -21,12 +21,12 @@
   - [x] 4.2. Install / dependency instructions
   - [x] 4.4. Test instructions + getting started
 
-- [-] **5. End-to-end verification**
+- [x] **5. End-to-end verification**
   - [x] 5.1. Register the server in a real MCP client and confirm tools list
   - [x] 5.2. Exercise `init` → `add` → `list` flow; verify `workload.json` matches CLI output
   - [x] 5.3. Exercise an error path and confirm MCP error surfaces with a useful message
   - [x] 5.4. MCP-client registration instructions
-  - [ ] 5.5. Maintain formatting for `list` tool
+  - [x] 5.5. Maintain formatting for `list` tool
 
 - [x] **6. Release automation & docs**
   - [x] 6.1. GitHub Actions pipeline for PR and main (lint, test)
