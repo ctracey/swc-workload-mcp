@@ -26,7 +26,7 @@ register swc-workload mcp server for this project scope
 claude mcp add --scope project swc-workload -- \
   uv run --directory "$(PATH_TO_SWC-WORKLOAD-MCP)" swc-workload-mcp
 ```
-* `--directory` - location of where you cloned swc-workload-mcp repo
+* `--directory` - location of where you cloned swc-workload-mcp repo (DON'T use `~/`. Use full path)
 * `--scope` - project scope only installs this mcp server for this folder so its installed intentionally where this behaviour is desired.
 
 This writes a `.mcp.json` to the current location (for project scope).
