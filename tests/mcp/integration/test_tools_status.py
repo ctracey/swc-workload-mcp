@@ -33,7 +33,7 @@ async def test_marking_child_in_progress_rolls_parent_to_in_progress(mcpw_ready)
     result = await call_tool("start", workload=w, ref="3.2")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     parent = after[2]
     assert parent["children"][1]["status"] == "in-progress"
     assert parent["status"] == "in-progress"
@@ -54,7 +54,7 @@ async def test_marking_last_child_done_rolls_parent_to_done(mcpw_ready):
     result = await call_tool("complete", workload=w, ref="1.2")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     p = after[0]
     assert p["children"][1]["status"] == "done"
     assert p["status"] == "done"
@@ -80,7 +80,7 @@ async def test_start_on_done_is_sticky_and_leaves_file_unchanged(mcpw_ready):
 
     assert workload_json.read_text() == original
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert after[0]["status"] == "done"
 
 
@@ -92,13 +92,13 @@ async def test_reset_on_done_re_opens_it(mcpw_ready):
 
     await call_tool("add", workload=w, title="leaf")
     await call_tool("complete", workload=w, ref="1")
-    before_list = (await call_tool("list", workload=w)).payload["items"]
+    before_list = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert before_list[0]["status"] == "done"
 
     result = await call_tool("reset", workload=w, ref="1")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert after[0]["status"] == "not-started"
 
 
@@ -138,5 +138,5 @@ async def test_parent_marked_done_with_undone_children_warns_on_stderr(mcpw_read
     assert result.error is None, result.error
 
     assert workload_json.read_text() != before
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert after[0]["status"] == "done"

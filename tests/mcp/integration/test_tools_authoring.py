@@ -38,7 +38,7 @@ async def test_add_appends_top_level_item_with_hash_id(mcpw_ready):
     result = await call_tool("add", workload=w, title="build a thing")
     assert result.error is None, result.error
 
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     assert len(items) == 3
     assert items[2]["title"] == "build a thing"
@@ -54,7 +54,7 @@ async def test_add_assigns_unique_hashes_when_titles_collide_across_parents(mcpw
 
     await call_tool("add", workload=w, title="duplicate title")
     await call_tool("add", workload=w, title="duplicate title", placement="to", ref="1")
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     top = listed.payload["items"][0]
     child = top["children"][0]
     assert top["id"] != child["id"], (
@@ -83,7 +83,7 @@ async def test_add_accepts_leading_digits_without_dot(mcpw_ready):
 
     result = await call_tool("add", workload=w, title="12 monkeys")
     assert result.error is None, result.error
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     assert items[0]["title"] == "12 monkeys"
 
@@ -104,7 +104,7 @@ async def test_add_as_child_of_parent(mcpw_ready):
     result = await call_tool("add", workload=w, title="sub item", placement="to", ref="2")
     assert result.error is None, result.error
 
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     assert items[1]["children"][0]["title"] == "sub item"
     assert items[1]["children"][0]["number"] == "2.1"
@@ -146,7 +146,7 @@ async def test_add_allows_same_title_under_different_parent(mcpw_ready):
     result = await call_tool("add", workload=w, title="alpha", placement="to", ref="2")
     assert result.error is None, result.error
 
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     assert items[0]["title"] == "alpha"
     assert items[1]["children"][0]["title"] == "alpha"
@@ -171,7 +171,7 @@ async def test_add_at_top_level_position_shifts_siblings_down(mcpw_ready):
     result = await call_tool("add", workload=w, title="x", placement="at", ref="2")
     assert result.error is None, result.error
 
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     titles = [i["title"] for i in listed.payload["items"]]
     assert titles == ["a", "x", "b", "c"]
 
@@ -190,7 +190,7 @@ async def test_add_at_nested_position_uses_parent_from_target(mcpw_ready):
     result = await call_tool("add", workload=w, title="x", placement="at", ref="2.1")
     assert result.error is None, result.error
 
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     titles = [c["title"] for c in items[1]["children"]]
     assert titles == ["x", "a", "b"]
@@ -208,7 +208,7 @@ async def test_add_at_out_of_range_caps_at_end(mcpw_ready):
     result = await call_tool("add", workload=w, title="x", placement="at", ref="99")
     assert result.error is None, result.error
 
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     titles = [i["title"] for i in listed.payload["items"]]
     assert titles == ["a", "b", "x"]
 
@@ -342,7 +342,7 @@ async def test_add_ref_without_placement_surfaces_cli_rejection(mcpw_ready):
     msg = result.error.lower()
     assert "expected" in msg and ("to <parent>" in msg or "at <position>" in msg)
     # And confirm the workload state matches: only the parent, no orphan
-    tree = (await call_tool("list", workload=w)).payload["items"]
+    tree = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert len(tree) == 1
     assert tree[0]["title"] == "parent"
     assert tree[0]["children"] == []
@@ -397,7 +397,7 @@ async def test_delete_drops_item_and_descendants_with_renumber(mcpw_ready):
     result = await call_tool("delete", workload=w, ref="2")
     assert result.error is None, result.error
 
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     titles = [i["title"] for i in items]
     assert titles == ["one", "three"]
@@ -422,13 +422,13 @@ async def test_rename_preserves_id_status_position(mcpw_ready):
     await call_tool("add", workload=w, title="target", placement="to", ref="2")
     await call_tool("start", workload=w, ref="2.3")
 
-    before = (await call_tool("list", workload=w)).payload["items"]
+    before = (await call_tool("list", workload=w, json=True)).payload["items"]
     target_id = before[1]["children"][2]["id"]
 
     result = await call_tool("rename", workload=w, ref="2.3", title="new title")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     target = after[1]["children"][2]
     assert target["title"] == "new title"
     assert target["id"] == target_id
@@ -445,7 +445,7 @@ async def test_rename_rejects_dotted_number_prefix(mcpw_ready):
     await call_tool("add", workload=w, title="first")
     result = await call_tool("rename", workload=w, ref="1", title="2.3 new title")
     assert result.error is not None
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     assert items[0]["title"] == "first"
 
@@ -462,7 +462,7 @@ async def test_rename_rejects_duplicate_sibling_title(mcpw_ready):
     assert result.error is not None
     msg = result.error.lower()
     assert "collide" in msg or "alpha" in msg
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     assert items[1]["title"] == "beta"
 
@@ -487,7 +487,7 @@ async def test_rename_allows_case_change_of_own_title(mcpw_ready):
     await call_tool("add", workload=w, title="alpha")
     result = await call_tool("rename", workload=w, ref="1", title="ALPHA")
     assert result.error is None, result.error
-    listed = await call_tool("list", workload=w)
+    listed = await call_tool("list", workload=w, json=True)
     items = listed.payload["items"]
     assert items[0]["title"] == "ALPHA"
 
@@ -519,13 +519,13 @@ async def test_move_up_preserves_ids(mcpw_ready):
     await call_tool("add", workload=w, title="parent")
     for label in ("a", "b", "c"):
         await call_tool("add", workload=w, title=label, placement="to", ref="1")
-    before = (await call_tool("list", workload=w)).payload["items"][0]["children"]
+    before = (await call_tool("list", workload=w, json=True)).payload["items"][0]["children"]
     ids = [c["id"] for c in before]
 
     result = await call_tool("move", workload=w, ref="1.3", direction="up")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"][0]["children"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"][0]["children"]
     assert [c["title"] for c in after] == ["a", "c", "b"]
     assert {c["id"] for c in after} == set(ids)
 
@@ -541,7 +541,7 @@ async def test_move_top_moves_to_first_slot(mcpw_ready):
         await call_tool("add", workload=w, title=label, placement="to", ref="1")
     result = await call_tool("move", workload=w, ref="1.3", direction="top")
     assert result.error is None
-    after = (await call_tool("list", workload=w)).payload["items"][0]["children"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"][0]["children"]
     assert [c["title"] for c in after] == ["c", "a", "b"]
     assert after[0]["number"] == "1.1"
 
@@ -583,13 +583,13 @@ async def test_move_reparents_and_reflows_both_sides(mcpw_ready):
     for label in ("3a", "3b"):
         await call_tool("add", workload=w, title=label, placement="to", ref="3")
 
-    before = (await call_tool("list", workload=w)).payload["items"]
+    before = (await call_tool("list", workload=w, json=True)).payload["items"]
     target_id = before[1]["children"][2]["children"][0]["id"]
 
     result = await call_tool("move", workload=w, ref="2.3.1", direction="to", target="3.2")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     three_children = after[2]["children"]
     assert [c["title"] for c in three_children] == ["3a", "moveme", "3b"]
     assert three_children[1]["id"] == target_id
@@ -609,11 +609,11 @@ async def test_move_rejects_cycle(mcpw_ready):
         await call_tool("add", workload=w, title=label, placement="to", ref="2")
     await call_tool("add", workload=w, title="deep", placement="to", ref="2.3")  # 2.3.1
 
-    before = (await call_tool("list", workload=w)).payload["items"]
+    before = (await call_tool("list", workload=w, json=True)).payload["items"]
     result = await call_tool("move", workload=w, ref="2", direction="to", target="2.3.1")
     assert result.error is not None
     assert "cycle" in result.error.lower()
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert after == before
 
 
@@ -627,12 +627,12 @@ async def test_move_rejects_missing_target_parent(mcpw_ready):
     await call_tool("add", workload=w, title="two")
     await call_tool("add", workload=w, title="2a", placement="to", ref="2")
 
-    before = (await call_tool("list", workload=w)).payload["items"]
+    before = (await call_tool("list", workload=w, json=True)).payload["items"]
     result = await call_tool("move", workload=w, ref="2.1", direction="to", target="9.9")
     assert result.error is not None
     msg = result.error.lower()
     assert "not exist" in msg or "does not" in msg
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert after == before
 
 
@@ -652,12 +652,12 @@ async def test_move_rejects_unknown_second_token(mcpw_ready):
     for label in ("2a", "2b"):
         await call_tool("add", workload=w, title=label, placement="to", ref="2")
 
-    before = (await call_tool("list", workload=w)).payload["items"]
+    before = (await call_tool("list", workload=w, json=True)).payload["items"]
     result = await call_tool("move", workload=w, ref="2.1", direction="too", target="2.2")
     assert result.error is not None
     msg = result.error.lower()
     assert "too" in msg or "expected" in msg or "'to'" in msg
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert after == before
 
 
@@ -719,13 +719,13 @@ async def test_move_leaves_orphaned_parent_status_untouched(mcpw_ready):
     await call_tool("add", workload=w, title="kid", placement="to", ref="2")
     await call_tool("start", workload=w, ref="2.1")
 
-    before = (await call_tool("list", workload=w)).payload["items"]
+    before = (await call_tool("list", workload=w, json=True)).payload["items"]
     assert before[1]["status"] == "in-progress"
 
     result = await call_tool("move", workload=w, ref="2.1", direction="to", target="2")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     orphaned = next(i for i in after if i["title"] == "parent")
     assert orphaned["children"] == []
     assert orphaned["status"] == "in-progress"
@@ -745,7 +745,7 @@ async def test_move_same_parent_source_after_target_lands_at_requested_position(
     result = await call_tool("move", workload=w, ref="2.3", direction="to", target="2.1")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     titles = [c["title"] for c in after[1]["children"]]
     assert titles == ["2c", "2a", "2b"]
 
@@ -761,13 +761,13 @@ async def test_move_same_parent_source_before_target_lands_at_requested_position
     for label in ("a", "b", "c"):
         await call_tool("add", workload=w, title=label, placement="to", ref="2")
 
-    before = (await call_tool("list", workload=w)).payload["items"]
+    before = (await call_tool("list", workload=w, json=True)).payload["items"]
     ids_before = {c["title"]: c["id"] for c in before[1]["children"]}
 
     result = await call_tool("move", workload=w, ref="2.1", direction="to", target="2.3")
     assert result.error is None, result.error
 
-    after = (await call_tool("list", workload=w)).payload["items"]
+    after = (await call_tool("list", workload=w, json=True)).payload["items"]
     titles = [c["title"] for c in after[1]["children"]]
     ids_after = {c["title"]: c["id"] for c in after[1]["children"]}
 

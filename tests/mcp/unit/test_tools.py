@@ -31,15 +31,36 @@ from swc_workload_mcp import bridge, tools
 
 
 class _BridgeRecorder:
-    """Records calls to a stub `bridge.invoke` and returns a canned result."""
+    """Records calls to the bridge entry points and returns a canned result.
+
+    Patches both ``bridge.invoke`` (parsed-JSON path) and
+    ``bridge.invoke_text`` (raw stdout path). ``calls`` aggregates
+    every call across both paths so existing tests that only check
+    argv keep working; ``json_calls`` / ``text_calls`` let tests that
+    care about which path was taken assert on it directly.
+    """
 
     def __init__(self, result: Any = None, *, raises: Exception | None = None) -> None:
         self.result = result
         self.raises = raises
         self.calls: list[tuple[str, list[str]]] = []
+        self.json_calls: list[tuple[str, list[str]]] = []
+        self.text_calls: list[tuple[str, list[str]]] = []
 
-    def __call__(self, op: str, args: list[str]) -> Any:
-        self.calls.append((op, list(args)))
+    def invoke(self, op: str, args: list[str]) -> Any:
+        self._record(self.json_calls, op, args)
+        return self._return()
+
+    def invoke_text(self, op: str, args: list[str]) -> Any:
+        self._record(self.text_calls, op, args)
+        return self._return()
+
+    def _record(self, bucket: list[tuple[str, list[str]]], op: str, args: list[str]) -> None:
+        entry = (op, list(args))
+        bucket.append(entry)
+        self.calls.append(entry)
+
+    def _return(self) -> Any:
         if self.raises is not None:
             raise self.raises
         return self.result
@@ -47,11 +68,12 @@ class _BridgeRecorder:
 
 @pytest.fixture
 def stub_bridge(monkeypatch: pytest.MonkeyPatch):
-    """Patch `tools._invoke`'s underlying `bridge.invoke` with a recorder."""
+    """Patch both `bridge.invoke` and `bridge.invoke_text` with a recorder."""
 
     def _install(result: Any = None, *, raises: Exception | None = None) -> _BridgeRecorder:
         recorder = _BridgeRecorder(result, raises=raises)
-        monkeypatch.setattr(tools.bridge, "invoke", recorder)
+        monkeypatch.setattr(tools.bridge, "invoke", recorder.invoke)
+        monkeypatch.setattr(tools.bridge, "invoke_text", recorder.invoke_text)
         return recorder
 
     return _install
@@ -62,13 +84,26 @@ def stub_bridge(monkeypatch: pytest.MonkeyPatch):
 # ---------------------------------------------------------------------------
 
 
-def test_list_tool_returns_parsed_json(stub_bridge) -> None:
-    recorder = stub_bridge(result={"items": []})
+def test_list_tool_default_returns_text(stub_bridge) -> None:
+    """Default ``list`` routes through the text bridge — matches CLI tree render."""
+    recorder = stub_bridge(result="• 1 First item\n• 2 Second item\n")
 
     result = tools.list(workload="/tmp/wl")
 
+    assert result == "• 1 First item\n• 2 Second item\n"
+    assert recorder.text_calls == [("list", ["--workload", "/tmp/wl"])]
+    assert recorder.json_calls == []
+
+
+def test_list_tool_with_json_true_returns_parsed_json(stub_bridge) -> None:
+    """``json=True`` routes through the JSON bridge — returns parsed payload."""
+    recorder = stub_bridge(result={"items": []})
+
+    result = tools.list(workload="/tmp/wl", json=True)
+
     assert result == {"items": []}
-    assert recorder.calls == [("list", ["--workload", "/tmp/wl"])]
+    assert recorder.json_calls == [("list", ["--workload", "/tmp/wl"])]
+    assert recorder.text_calls == []
 
 
 def test_add_tool_forwards_positional_args_alongside_flags(stub_bridge) -> None:
@@ -145,10 +180,16 @@ def test_cli_execution_error_maps_to_tool_error_with_exit_and_stderr(stub_bridge
 def test_cli_response_error_maps_to_tool_error_with_version_mismatch_hint(
     stub_bridge,
 ) -> None:
+    """JSON-mode list (and every other tool) maps CLIResponseError to a ToolError.
+
+    The text-mode default of ``list`` cannot encounter
+    ``CLIResponseError`` because it does not parse stdout — so we
+    explicitly exercise the JSON path with ``json=True``.
+    """
     stub_bridge(raises=bridge.CLIResponseError(raw_stdout="not json blah"))
 
     with pytest.raises(ToolError) as excinfo:
-        tools.list(workload="/tmp/wl")
+        tools.list(workload="/tmp/wl", json=True)
 
     msg = str(excinfo.value)
     assert "not json blah" in msg
@@ -204,7 +245,7 @@ EXPECTED_SIGNATURES: dict[str, dict[str, Any]] = {
     },
     "list": {
         "required": ["workload"],
-        "optional": ["ref", "filter", "exclude", "no_ids"],
+        "optional": ["ref", "filter", "exclude", "no_ids", "json"],
     },
     "find": {
         "required": ["workload", "keyword"],
