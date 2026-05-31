@@ -26,9 +26,9 @@ errors with actionable hints.
 
 ## Documentation
 
-- [Architecture](docs/architecture.md) — layer-by-layer design.
 - [Usage](docs/usage.md) — register the server with an MCP client
-  (Claude Code) and confirm it's working.
+  (e.g Claude Code) and confirm it's working.
+- [Architecture](docs/architecture.md) — layer-by-layer design.
 - [Development](docs/development.md) — prerequisites, install, tests,
   CI, and the release workflow.
 - [Test with MCP Inspector](docs/test-with-mcp-inspector.md) — interactive
