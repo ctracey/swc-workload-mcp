@@ -12,17 +12,42 @@ place to put it. Claude Code is documented here.
 
 ## Claude Code Setup
 
-### 1. Clone this repo locally
-Usual process
+### 1. Clone this repo
 
-### 2. Register
-From your project root
+```sh
+# clone this repo to be able to run this mcp server locally
+git clone https://github.com/ctracey/swc-workload-mcp.git
+cd ~/swc-workload-mcp # or whichever local folder you choose
+```
 
-e.g.
-`cd ~/tmp/test_swc-mcp`
+### 2. Install uv (python package manager)
+
+```sh
+# install uv if you don't have it (macOS):
+brew install uv
+# or platform-agnostic:
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### 3. Install swc-workload-cli
+
+This MCP server is a wrapper for the swc-workload-cli tool
+
+```sh
+# install swc-workload-cli dependency
+make install
+```
+
+### 4. Register the MCP server
+Register this MCP server.
+With the project scope the MCP Server can be installed explicity for each project that you want to use if for
+
+Run this from your project root (not the swc-workload-mcp location):
+e.g. `cd ~/tmp/test_swc-mcp`
 
 register swc-workload mcp server for this project scope
 ```sh
+# register swc-workload MCP Server for a specific project
 claude mcp add --scope project swc-workload -- \
   uv run --directory "$(PATH_TO_SWC-WORKLOAD-MCP)" swc-workload-mcp
 ```
