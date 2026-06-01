@@ -16,8 +16,7 @@ place to put it. Claude Code is documented here.
 
 ```sh
 # clone this repo to be able to run this mcp server locally
-git clone https://github.com/ctracey/swc-workload-mcp.git
-cd ~/swc-workload-mcp # or whichever local folder you choose
+git clone https://github.com/ctracey/swc-workload-mcp.git ~/claude-mcp-servers/swc-workload-mcp
 ```
 
 ### 2. Install uv (python package manager)
