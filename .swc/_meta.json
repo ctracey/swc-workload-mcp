@@ -1,5 +1,5 @@
 {
   "workloads": {
-    "main": "main",
+    "meta-attributes": "meta-attributes"
   }
 }

@@ -1,0 +1,98 @@
+{
+  "items": [
+    {
+      "id": "ab9f596",
+      "title": "Meta field + writers",
+      "status": "not-started",
+      "children": [
+        {
+          "id": "b0a0ebc",
+          "title": "Workitem shape: add `meta` field, default `{}`",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "5938f5e",
+          "title": "`update_meta(ref, path, value)` \u2014 single path-based writer (replace at path; empty path replaces whole meta)",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "d5a97da",
+          "title": "`add(title, meta?)` \u2014 accept optional meta at creation",
+          "status": "not-started",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "d9d276d",
+      "title": "Reads",
+      "status": "not-started",
+      "children": [
+        {
+          "id": "4b7b6d1",
+          "title": "`get(ref, meta=True)` \u2014 dedicated single-item lookup, meta on by default",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "648bbf3",
+          "title": "`find_by_meta(path, pattern?)` \u2014 path-based; presence if no pattern, regex match if pattern provided",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "d51b4af",
+          "title": "Meta opt-in on existing reads: `list` / `find` / `summary` accept `meta: bool`",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "b6169d5",
+          "title": "Boolean flag convention shift: `--no-ids` \u2192 `--ids true|false` on `list`",
+          "status": "not-started",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "2245696",
+      "title": "Transitions",
+      "status": "not-started",
+      "children": [
+        {
+          "id": "17d823e",
+          "title": "`start` / `complete` / `reset` accept optional `meta: {path: value, ...}` \u2014 multi-path atomic with status flip",
+          "status": "not-started",
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "eb41879",
+      "title": "Docs + version handshake",
+      "status": "not-started",
+      "children": [
+        {
+          "id": "9c6a118",
+          "title": "`version()` tool \u2014 returns `{mcp, cli}` versions",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "88c7de1",
+          "title": "Usage docs: `meta` field, namespace convention (`vendor:purpose`, avoid dots), `update_meta` + `find_by_meta` path usage",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "3bd5d53",
+          "title": "Usage docs: read defaults table, boolean flag convention, breaking-change note",
+          "status": "not-started",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
