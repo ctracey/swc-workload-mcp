@@ -51,7 +51,8 @@ will self-heal on first startup — but the `/mcp` dialog may briefly
 show **failed** while dependencies install.
 
 ```sh
-uv sync --directory "$(PATH_TO_SWC-WORKLOAD-MCP)"
+MCP_SERVER_PATH=/path/to/swc-workload-mcp
+uv sync --directory "$MCP_SERVER_PATH"
 ```
 
 ### 5. Register the MCP server
@@ -63,11 +64,10 @@ Run this from your project root (not the swc-workload-mcp location):
 e.g. `cd ~/tmp/test_swc-mcp`
 
 ```sh
-# register swc-workload MCP Server for a specific project
-claude mcp add --scope project swc-workload -- \
-  "$(PATH_TO_SWC-WORKLOAD-MCP)/bin/start.sh"
+MCP_SERVER_PATH=/path/to/swc-workload-mcp
+claude mcp add --scope project swc-workload -- "$MCP_SERVER_PATH/bin/start.sh"
 ```
-* `PATH_TO_SWC-WORKLOAD-MCP` - full path to where you cloned the repo (DON'T use `~/`. Use full path)
+* `MCP_SERVER_PATH` - full path to where you cloned the repo (DON'T use `~/`. Use full path)
 * `--scope` - project scope only installs this mcp server for this folder so it's installed intentionally where this behaviour is desired.
 
 This writes a `.mcp.json` to the current location (for project scope).
