@@ -6,7 +6,7 @@ directly by stubbing `bridge.invoke` and asserting:
 
 - argv translation (positional + optional flags) — REQ-01, REQ-02
 - error mapping for each `BridgeError` subclass — REQ-03, REQ-04, REQ-05
-- the module exposes exactly the 12 expected tools — REQ-06
+- the module exposes exactly the 14 expected tools — REQ-06
 - each tool's signature matches the CLI op's documented args — REQ-07
 
 Integration-level tests against a real CLI + temp workload are out of
@@ -197,7 +197,7 @@ def test_cli_response_error_maps_to_tool_error_with_version_mismatch_hint(
 
 
 # ---------------------------------------------------------------------------
-# REQ-06 — module exposes exactly the 14 expected tools
+# REQ-06 — module exposes exactly the 15 expected tools
 # ---------------------------------------------------------------------------
 
 
@@ -216,10 +216,11 @@ EXPECTED_TOOLS = [
     "start",
     "complete",
     "move",
+    "version",
 ]
 
 
-def test_module_exposes_exactly_the_14_expected_tools() -> None:
+def test_module_exposes_exactly_the_15_expected_tools() -> None:
     registry_names = [fn.__name__ for fn in tools.TOOLS]
     assert registry_names == EXPECTED_TOOLS
 
@@ -294,6 +295,10 @@ EXPECTED_SIGNATURES: dict[str, dict[str, Any]] = {
         # relative direction (up|down|top|bottom) or the literal "to".
         "required": ["workload", "ref", "direction"],
         "optional": ["target"],
+    },
+    "version": {
+        "required": [],
+        "optional": [],
     },
 }
 
@@ -522,6 +527,23 @@ def test_move_tool_absolute(stub_bridge) -> None:
 
 
 # ---------------------------------------------------------------------------
+# version — does not call the bridge
+# ---------------------------------------------------------------------------
+
+
+def test_version_returns_mcp_key() -> None:
+    result = tools.version()
+    assert "mcp" in result
+    assert isinstance(result["mcp"], str)
+    assert len(result["mcp"]) > 0
+
+
+def test_version_matches_package_version() -> None:
+    from swc_workload_mcp import __version__
+    assert tools.version() == {"mcp": __version__}
+
+
+# ---------------------------------------------------------------------------
 # Error mapping is uniform across tools — spot-check a non-list tool
 # ---------------------------------------------------------------------------
 
@@ -529,7 +551,10 @@ def test_move_tool_absolute(stub_bridge) -> None:
 def test_error_mapping_applies_to_every_tool(stub_bridge) -> None:
     stub_bridge(raises=bridge.CLINotFoundError(searched_paths=["swc-workload"]))
 
-    for name in EXPECTED_TOOLS:
+    # `version` does not call the bridge — skip it here.
+    bridge_tools = [n for n in EXPECTED_TOOLS if n != "version"]
+
+    for name in bridge_tools:
         fn = getattr(tools, name)
         with pytest.raises(ToolError):
             # Pass a minimal kwarg set — every tool requires `workload`.

@@ -29,6 +29,7 @@ from typing import Any
 from mcp.server.fastmcp.exceptions import ToolError
 
 from . import bridge
+from ._version import __version__
 
 
 __all__ = [
@@ -47,6 +48,7 @@ __all__ = [
     "start",
     "complete",
     "move",
+    "version",
 ]
 
 
@@ -312,6 +314,15 @@ def move(
     return _invoke("move", args)
 
 
+def version() -> Any:
+    """Return the MCP server version.
+
+    Returns ``{"mcp": "<version>"}`` so callers can detect compatibility
+    without inspecting the package directly.
+    """
+    return {"mcp": __version__}
+
+
 # ---------------------------------------------------------------------------
 # Registry — order matches the CLI op order documented in workload.md
 # ---------------------------------------------------------------------------
@@ -332,4 +343,5 @@ TOOLS = [
     start,
     complete,
     move,
+    version,
 ]
