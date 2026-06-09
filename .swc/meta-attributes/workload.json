@@ -76,7 +76,7 @@
         {
           "id": "548c335",
           "title": "Development docs: note pinned CLI version, confirm `make install` handles it, upgrade path",
-          "status": "not-started",
+          "status": "done",
           "children": []
         }
       ]

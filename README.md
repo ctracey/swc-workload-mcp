@@ -18,15 +18,29 @@ instead of shelling out and parsing CLI output.
 
 ## What it does
 
-Exposes 15 MCP tools over the standard MCP stdio transport:
-
-`init`, `exists`, `list`, `find`, `summary`, `get`, `add`, `update`,
-`rename`, `delete`, `reset`, `start`, `complete`, `move`, `version`
-
-Each tool translates its kwargs into the CLI's argv, invokes
+Exposes 15 MCP tools over the standard MCP stdio transport. Each tool
+translates its kwargs into the CLI's argv, invokes
 `swc-workload <op> --json` as a subprocess, parses the JSON, and
 returns it to the client. CLI errors map to structured MCP tool
 errors with actionable hints.
+
+| Tool | Description |
+|------|-------------|
+| `init` | Initialise a fresh workload at a folder
+| `exists` | Check whether a workload exists at a folder
+| `list` | Display the workload tree; filter by status, scope to a ref
+| `summary` | Total / done / progress percentage
+| `add` | Add a work item; optionally set `meta` at creation
+| `get` | Fetch a single item including its full `meta` blob
+| `find` | Find items by title keyword or meta path (with optional regex)
+| `move` | Move a work item (relative or absolute position)
+| `update` | Write to any field or `meta` path on a work item
+| `rename` | Rename a work item
+| `start` | Mark a work item as in-progress
+| `complete` | Mark a work item as done
+| `reset` | Mark a work item as not-started
+| `delete` | Delete a work item and all descendants
+| `version` | Return the MCP server version
 
 ## Documentation
 
