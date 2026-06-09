@@ -79,6 +79,31 @@ External dependency installed separately from
 semantics; this repo treats its `--json` interface as a contract and
 does not modify it.
 
+## Meta fields
+
+Every work item carries a `meta` field — a free-form JSON object that
+defaults to `{}`. The MCP server treats it as opaque: it serialises
+and deserialises the value but imposes no schema. All meaning is
+defined by the caller.
+
+Four tools interact with `meta`:
+
+- `add` — accepts an optional `meta` object at creation time.
+- `get` — always returns the full `meta` blob alongside the item.
+- `update` — writes to meta via path notation (`meta.<key>` for a
+  single field, `meta` to replace the whole object).
+- `find` — searches by meta path, with an optional regex pattern.
+
+### Namespace convention
+
+Use `vendor:purpose` colon-separated key names to avoid collisions
+when multiple tools or agents share the same workload — e.g.
+`swc:owner`, `ci:run_id`, `issue:url`. Dots must not appear in key
+names: the dot is the path separator in `update` and `find`, so a
+dot inside a key name would be misread as a sub-path traversal.
+
+Path notation details and examples are in [Usage](usage.md#meta-path-notation-reference).
+
 ## Startup behaviour
 
 The server is **fail-fast on a missing CLI**. When `server.main()` is
