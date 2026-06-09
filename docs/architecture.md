@@ -52,9 +52,11 @@ means appending to the registry in `tools.py`, not editing `server.py`.
 
 ### Tool layer (`tools.py`)
 
-Twelve typed Python callables, one per CLI op (`init`, `exists`, `list`,
-`find`, `summary`, `add`, `rename`, `delete`, `reset`, `start`,
-`complete`, `move`), plus a `TOOLS` registry. Each tool translates its
+Fifteen typed Python callables (`init`, `exists`, `list`, `find`, `summary`,
+`get`, `add`, `update`, `rename`, `delete`, `reset`, `start`, `complete`,
+`move`, `version`), plus a `TOOLS` registry. All but `version` delegate to
+the CLI bridge; `version` returns the MCP package version directly without
+a subprocess call. Each tool translates its
 kwargs into the CLI's argv (positional first, then `--flag value`),
 delegates to the bridge, and maps `BridgeError` subclasses to FastMCP
 `ToolError` instances with actionable hints. Tool names are flat — MCP

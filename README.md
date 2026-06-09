@@ -18,11 +18,10 @@ instead of shelling out and parsing CLI output.
 
 ## What it does
 
-Exposes 12 MCP tools — one per CLI op — over the standard MCP stdio
-transport:
+Exposes 15 MCP tools over the standard MCP stdio transport:
 
-`init`, `exists`, `list`, `find`, `summary`, `add`, `rename`,
-`delete`, `reset`, `start`, `complete`, `move`
+`init`, `exists`, `list`, `find`, `summary`, `get`, `add`, `update`,
+`rename`, `delete`, `reset`, `start`, `complete`, `move`, `version`
 
 Each tool translates its kwargs into the CLI's argv, invokes
 `swc-workload <op> --json` as a subprocess, parses the JSON, and
