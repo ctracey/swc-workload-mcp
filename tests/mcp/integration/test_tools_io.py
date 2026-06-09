@@ -180,6 +180,60 @@ async def test_update_rejects_id_path(mcpw_ready):
 
 
 # ---------------------------------------------------------------------------
+# update — title and status paths (direct update tool, not convenience wrappers)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.anyio
+async def test_update_title_path(mcpw_ready):
+    """update with path=title renames the item."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="original")
+    result = await call_tool("update", workload=w, ref="1", path="title", value="renamed")
+    assert result.error is None, result.error
+
+    item = (await call_tool("get", workload=w, ref="1")).payload
+    assert item["title"] == "renamed"
+
+
+@pytest.mark.anyio
+async def test_update_status_path(mcpw_ready):
+    """update with path=status transitions the item."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="item")
+    result = await call_tool("update", workload=w, ref="1", path="status", value="in-progress")
+    assert result.error is None, result.error
+
+    item = (await call_tool("get", workload=w, ref="1")).payload
+    assert item["status"] == "in-progress"
+
+
+# ---------------------------------------------------------------------------
+# add — with meta (item 1.3 — not yet implemented, expected to fail)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.anyio
+async def test_add_with_meta_sets_meta_on_creation(mcpw_ready):
+    """add should accept a meta param and pass --meta to the CLI.
+
+    This test will fail until item 1.3 is implemented.
+    """
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    result = await call_tool("add", workload=w, title="with meta", meta={"owner": "alice"})
+    assert result.error is None, result.error
+
+    item = (await call_tool("get", workload=w, ref="1")).payload
+    assert item["meta"]["owner"] == "alice"
+
+
+# ---------------------------------------------------------------------------
 # resolve by number / hash id; reference not found
 # ---------------------------------------------------------------------------
 

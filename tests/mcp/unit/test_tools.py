@@ -264,7 +264,7 @@ EXPECTED_SIGNATURES: dict[str, dict[str, Any]] = {
     },
     "add": {
         "required": ["workload", "title"],
-        "optional": ["placement", "ref"],
+        "optional": ["placement", "ref", "meta"],
     },
     "update": {
         "required": ["workload", "ref", "path", "value"],
@@ -464,6 +464,30 @@ def test_update_tool_argv(stub_bridge) -> None:
     tools.update(workload="/tmp/wl", ref="2", path="meta.owner", value="alice")
 
     assert recorder.calls == [("update", ["--workload", "/tmp/wl", "2", "meta.owner", "alice"])]
+
+
+def test_update_title_path_argv(stub_bridge) -> None:
+    recorder = stub_bridge(result={"id": "abc1234"})
+
+    tools.update(workload="/tmp/wl", ref="2", path="title", value="New title")
+
+    assert recorder.calls == [("update", ["--workload", "/tmp/wl", "2", "title", "New title"])]
+
+
+def test_update_meta_root_argv(stub_bridge) -> None:
+    recorder = stub_bridge(result={"id": "abc1234"})
+
+    tools.update(workload="/tmp/wl", ref="2", path="meta", value='{"owner":"alice"}')
+
+    assert recorder.calls == [("update", ["--workload", "/tmp/wl", "2", "meta", '{"owner":"alice"}'])]
+
+
+def test_add_with_meta_argv(stub_bridge) -> None:
+    recorder = stub_bridge(result={"id": "abc1234"})
+
+    tools.add(workload="/tmp/wl", title="Foo", meta={"owner": "alice"})
+
+    assert recorder.calls == [("add", ["--workload", "/tmp/wl", "Foo", "--meta", '{"owner": "alice"}'])]
 
 
 def test_rename_tool_argv(stub_bridge) -> None:

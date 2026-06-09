@@ -3,24 +3,24 @@
     {
       "id": "ab9f596",
       "title": "Meta field + writers",
-      "status": "not-started",
+      "status": "done",
       "children": [
         {
           "id": "b0a0ebc",
           "title": "Workitem shape: add `meta` field, default `{}`",
-          "status": "not-started",
+          "status": "done",
           "children": []
         },
         {
           "id": "5938f5e",
           "title": "`update_meta(ref, path, value)` \u2014 single path-based writer (replace at path; empty path replaces whole meta)",
-          "status": "not-started",
+          "status": "done",
           "children": []
         },
         {
           "id": "d5a97da",
           "title": "`add(title, meta?)` \u2014 accept optional meta at creation",
-          "status": "not-started",
+          "status": "done",
           "children": []
         }
       ]

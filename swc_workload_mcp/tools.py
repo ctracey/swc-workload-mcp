@@ -24,6 +24,7 @@ resolve to the rebound function in deferred-annotation contexts.
 from __future__ import annotations
 
 import builtins
+import json
 from typing import Any
 
 from mcp.server.fastmcp.exceptions import ToolError
@@ -230,6 +231,7 @@ def add(
     title: str,
     placement: str | None = None,
     ref: str | None = None,
+    meta: dict | None = None,
 ) -> Any:
     """Add a work item to the workload.
 
@@ -238,12 +240,15 @@ def add(
       last child of ``<parent>``.
     - ``add(title=..., placement="at", ref="<position>")`` — insert at
       that position; siblings shift down.
+    - ``meta`` — optional JSON object stored verbatim as the item's meta.
     """
     args = ["--workload", workload, title]
     if placement is not None:
         args.append(placement)
     if ref is not None:
         args.append(ref)
+    if meta is not None:
+        args += ["--meta", json.dumps(meta)]
     return _invoke("add", args)
 
 
