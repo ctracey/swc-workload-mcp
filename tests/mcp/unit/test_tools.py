@@ -415,7 +415,7 @@ def test_rename_tool_argv(stub_bridge) -> None:
     tools.rename(workload="/tmp/wl", ref="2.3", title="New title")
 
     assert recorder.calls == [
-        ("rename", ["--workload", "/tmp/wl", "2.3", "New title"])
+        ("update", ["--workload", "/tmp/wl", "2.3", "title", "New title"])
     ]
 
 
@@ -432,7 +432,7 @@ def test_reset_tool_argv(stub_bridge) -> None:
 
     tools.reset(workload="/tmp/wl", ref="2.3")
 
-    assert recorder.calls == [("reset", ["--workload", "/tmp/wl", "2.3"])]
+    assert recorder.calls == [("update", ["--workload", "/tmp/wl", "2.3", "status", "not-started"])]
 
 
 def test_start_tool_argv(stub_bridge) -> None:
@@ -440,7 +440,7 @@ def test_start_tool_argv(stub_bridge) -> None:
 
     tools.start(workload="/tmp/wl", ref="2.3")
 
-    assert recorder.calls == [("start", ["--workload", "/tmp/wl", "2.3"])]
+    assert recorder.calls == [("update", ["--workload", "/tmp/wl", "2.3", "status", "in-progress"])]
 
 
 def test_complete_tool_argv(stub_bridge) -> None:
@@ -448,7 +448,7 @@ def test_complete_tool_argv(stub_bridge) -> None:
 
     tools.complete(workload="/tmp/wl", ref="2.3")
 
-    assert recorder.calls == [("complete", ["--workload", "/tmp/wl", "2.3"])]
+    assert recorder.calls == [("update", ["--workload", "/tmp/wl", "2.3", "status", "done"])]
 
 
 def test_move_tool_relative(stub_bridge) -> None:

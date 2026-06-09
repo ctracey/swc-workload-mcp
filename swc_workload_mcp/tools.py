@@ -215,8 +215,8 @@ def add(
 
 def rename(workload: str, ref: str, title: str) -> Any:
     """Rename a work item. ID, status, parent, and position are preserved."""
-    args = ["--workload", workload, ref, title]
-    return _invoke("rename", args)
+    args = ["--workload", workload, ref, "title", title]
+    return _invoke("update", args)
 
 
 def delete(workload: str, ref: str) -> Any:
@@ -227,23 +227,20 @@ def delete(workload: str, ref: str) -> Any:
 
 def reset(workload: str, ref: str) -> Any:
     """Mark a work item as not-started (re-opens done items)."""
-    args = ["--workload", workload, ref]
-    return _invoke("reset", args)
+    args = ["--workload", workload, ref, "status", "not-started"]
+    return _invoke("update", args)
 
 
 def start(workload: str, ref: str) -> Any:
-    """Mark a work item as in-progress.
-
-    A done item is silently preserved (file unchanged, exits 0).
-    """
-    args = ["--workload", workload, ref]
-    return _invoke("start", args)
+    """Mark a work item as in-progress."""
+    args = ["--workload", workload, ref, "status", "in-progress"]
+    return _invoke("update", args)
 
 
 def complete(workload: str, ref: str) -> Any:
     """Mark a work item as done. Parent ancestors re-roll."""
-    args = ["--workload", workload, ref]
-    return _invoke("complete", args)
+    args = ["--workload", workload, ref, "status", "done"]
+    return _invoke("update", args)
 
 
 def move(

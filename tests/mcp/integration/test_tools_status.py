@@ -66,22 +66,19 @@ async def test_marking_last_child_done_rolls_parent_to_done(mcpw_ready):
 
 
 @pytest.mark.anyio
-async def test_start_on_done_is_sticky_and_leaves_file_unchanged(mcpw_ready):
-    """Mirrors: tests/bin/test_swc-workload_status.py::test_start_on_done_is_sticky_and_leaves_file_unchanged"""
-    call_tool, workload, workload_json, _seed = mcpw_ready
+async def test_start_on_done_transitions_to_in_progress(mcpw_ready):
+    """start on a done item transitions it back to in-progress (v1.2.1+ behaviour)."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
     w = str(workload)
 
     await call_tool("add", workload=w, title="leaf")
     await call_tool("complete", workload=w, ref="1")
 
-    original = workload_json.read_text()
     result = await call_tool("start", workload=w, ref="1")
     assert result.error is None, result.error
 
-    assert workload_json.read_text() == original
-
     after = (await call_tool("list", workload=w, json=True)).payload["items"]
-    assert after[0]["status"] == "done"
+    assert after[0]["status"] == "in-progress"
 
 
 @pytest.mark.anyio
