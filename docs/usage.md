@@ -102,3 +102,112 @@ In a fresh Claude Code session started inside the repo:
 
 For a more interactive way to poke at the server (independent of any
 client), see [Test with MCP Inspector](test-with-mcp-inspector.md).
+
+## Working with meta fields
+
+Every work item carries a free-form JSON object called `meta`
+(defaults to `{}`). Attach owner, estimate, priority, links, or
+any structured data your workflow needs.
+
+**Namespace your keys.** Use `vendor:purpose` colon-separated naming
+so multiple tools or agents can share a workload without colliding —
+e.g. `swc:owner`, `ci:run_id`, `issue:url`. Avoid dots in key names:
+dots are the path separator used by `update` and `find`, so a dot
+in a key name would be misinterpreted as a sub-path.
+
+### Example flow
+
+#### 1. Check and initialise
+
+```
+exists  workload=/tmp/meta-demo
+→ false
+
+init    workload=/tmp/meta-demo
+→ {"initialised": true}
+
+exists  workload=/tmp/meta-demo
+→ true
+```
+
+#### 2. Add items with metadata
+
+Pass `meta` as a JSON object at creation time. Namespace your keys —
+here `swc:` — to avoid collisions with other tools writing to this
+workload.
+
+```
+add  workload=/tmp/meta-demo
+     title="Implement login page"
+     meta={"swc:owner": "alice", "swc:priority": "high"}
+
+add  workload=/tmp/meta-demo
+     title="Write unit tests"
+     meta={"swc:owner": "bob", "swc:estimate": "2d"}
+
+add  workload=/tmp/meta-demo
+     title="Deploy to staging"
+     meta={"swc:owner": "alice", "swc:estimate": "1d"}
+```
+
+#### 3. Find by metadata
+
+Presence check — all items that have `swc:owner` set:
+
+```
+find  workload=/tmp/meta-demo  meta=swc:owner
+→ [all three items]
+```
+
+Pattern match — items where `swc:owner` matches `alice` (regex,
+`re.search`; partial matches work):
+
+```
+find  workload=/tmp/meta-demo  meta=swc:owner  pattern=alice
+→ [{"title": "Implement login page", ...}, {"title": "Deploy to staging", ...}]
+```
+
+#### 4. Fetch a single item
+
+```
+get  workload=/tmp/meta-demo  ref=1
+→ {
+    "id": "a1b2c3d", "number": "1",
+    "title": "Implement login page",
+    "status": "not-started",
+    "meta": {"swc:owner": "alice", "swc:priority": "high"}
+  }
+```
+
+`get` always returns the full `meta` blob.
+
+#### 5. Update metadata
+
+Write a single field — path is `meta.<key>`:
+
+```
+update  workload=/tmp/meta-demo  ref=1
+        path=meta.swc:priority  value=low
+```
+
+Replace the entire meta object — path is `meta`, value must be a
+JSON object:
+
+```
+update  workload=/tmp/meta-demo  ref=1
+        path=meta
+        value={"swc:owner": "alice", "swc:priority": "low", "swc:reviewed": true}
+```
+
+### Path notation reference
+
+The dot in `meta.swc:priority` is the path separator — everything
+after the first dot is the key name within the meta object. This is
+why keys must use `:` (not `.`) for namespacing.
+
+| path | meaning |
+|------|---------|
+| `meta` | the whole meta object |
+| `meta.owner` | top-level key `owner` |
+| `meta.swc:owner` | top-level key `swc:owner` (namespaced) |
+| `meta.tags[0]` | first element of `tags` array |
