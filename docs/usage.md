@@ -43,21 +43,32 @@ This MCP server is a wrapper for the swc-workload-cli tool
 make install
 ```
 
-### 4. Register the MCP server
+### 4. Pre-warm the venv
+
+Run this once after cloning so the venv is ready before Claude Code
+first launches the server. Skipping this step is fine — the server
+will self-heal on first startup — but the `/mcp` dialog may briefly
+show **failed** while dependencies install.
+
+```sh
+uv sync --directory "$(PATH_TO_SWC-WORKLOAD-MCP)"
+```
+
+### 5. Register the MCP server
+
 Register this MCP server.
-With the project scope the MCP Server can be installed explicity for each project that you want to use if for
+With the project scope the MCP Server can be installed explicitly for each project that you want to use it for.
 
 Run this from your project root (not the swc-workload-mcp location):
 e.g. `cd ~/tmp/test_swc-mcp`
 
-register swc-workload mcp server for this project scope
 ```sh
 # register swc-workload MCP Server for a specific project
 claude mcp add --scope project swc-workload -- \
-  uv run --directory "$(PATH_TO_SWC-WORKLOAD-MCP)" swc-workload-mcp
+  "$(PATH_TO_SWC-WORKLOAD-MCP)/bin/start.sh"
 ```
-* `--directory` - location of where you cloned swc-workload-mcp repo (DON'T use `~/`. Use full path)
-* `--scope` - project scope only installs this mcp server for this folder so its installed intentionally where this behaviour is desired.
+* `PATH_TO_SWC-WORKLOAD-MCP` - full path to where you cloned the repo (DON'T use `~/`. Use full path)
+* `--scope` - project scope only installs this mcp server for this folder so it's installed intentionally where this behaviour is desired.
 
 This writes a `.mcp.json` to the current location (for project scope).
 Use `--scope user` instead to register globally for your own machine — appropriate when the server
@@ -68,14 +79,10 @@ lives outside the project you're working in.
 registration time. Each Claude Code session execs the recorded
 command as a child process and speaks MCP over stdio.
 
-The pieces:
-- `uv run` — `uv`'s "run inside the project venv" wrapper. It
-  activates the venv before exec, which puts `.venv/bin/swc-workload`
-  on `PATH` so the server can resolve the CLI.
-- `--directory "$(PATH_TO_SWC-WORKLOAD-MCP)"` — pins the project root, so the command
-  works no matter what directory Claude Code launches it from.
-- `swc-workload-mcp` — the console-script entry point that runs
-  `swc_workload_mcp.server:main`.
+`start.sh` is a small wrapper that:
+1. Runs `uv sync --quiet` — a near-instant no-op when dependencies are
+   already installed, but will install them if missing (self-healing).
+2. Execs `.venv/bin/swc-workload-mcp` directly for a fast, low-overhead startup.
 
 If you've installed the server and CLI directly into a Python env
 that's already on `PATH` (no `uv`), the command simplifies to just
@@ -87,9 +94,11 @@ In a fresh Claude Code session started inside the repo:
 
 1. **Check it's connected.** Type `/mcp`. You should see
    `swc-workload` listed as **connected** with 15 tools. If it shows
-   **failed**, expand the entry — the server's stderr is shown
-   there; the most common cause is the `swc-workload` CLI not being
-   resolvable, which `uv run` should fix.
+   **failed** on first launch after skipping the pre-warm step, the
+   server is still installing dependencies — restart the server from
+   the `/mcp` dialog or start a new session. If it shows **failed**
+   consistently, expand the entry to see stderr; the most common cause
+   is the `swc-workload` CLI not being on `PATH`.
 2. **Exercise the golden path.** Ask the session something like:
 
    > Use swc-workload to init a workload at `/tmp/mcp-demo`, add an
