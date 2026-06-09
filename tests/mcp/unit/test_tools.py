@@ -341,12 +341,46 @@ def test_find_tool_argv(stub_bridge) -> None:
     assert recorder.calls == [("find", ["--workload", "/tmp/wl", "bug"])]
 
 
+def test_find_meta_presence_argv(stub_bridge) -> None:
+    recorder = stub_bridge(result={"matches": []})
+
+    tools.find(workload="/tmp/wl", meta="swc:stage")
+
+    assert recorder.calls == [("find", ["--workload", "/tmp/wl", "--meta", "swc:stage"])]
+
+
+def test_find_meta_with_pattern_argv(stub_bridge) -> None:
+    recorder = stub_bridge(result={"matches": []})
+
+    tools.find(workload="/tmp/wl", meta="swc:stage", pattern="plan")
+
+    assert recorder.calls == [("find", ["--workload", "/tmp/wl", "--meta", "swc:stage", "plan"])]
+
+
+def test_find_requires_keyword_or_meta() -> None:
+    with pytest.raises(ToolError, match="keyword"):
+        tools.find(workload="/tmp/wl")
+
+
+def test_find_keyword_and_meta_are_mutually_exclusive() -> None:
+    with pytest.raises(ToolError, match="both"):
+        tools.find(workload="/tmp/wl", keyword="foo", meta="swc:stage")
+
+
 def test_summary_tool_argv(stub_bridge) -> None:
     recorder = stub_bridge(result={"total": 0})
 
     tools.summary(workload="/tmp/wl")
 
     assert recorder.calls == [("summary", ["--workload", "/tmp/wl"])]
+
+
+def test_get_tool_argv(stub_bridge) -> None:
+    recorder = stub_bridge(result={"id": "abc1234", "title": "foo", "status": "not-started", "meta": {}})
+
+    tools.get(workload="/tmp/wl", ref="2.3")
+
+    assert recorder.calls == [("get", ["--workload", "/tmp/wl", "2.3"])]
 
 
 def test_list_tool_with_all_optional_kwargs(stub_bridge) -> None:
@@ -417,6 +451,14 @@ def test_add_tool_forwards_ref_even_when_placement_is_missing(stub_bridge) -> No
     tools.add(workload="/tmp/wl", title="Foo", ref="1")
 
     assert recorder.calls == [("add", ["--workload", "/tmp/wl", "Foo", "1"])]
+
+
+def test_update_tool_argv(stub_bridge) -> None:
+    recorder = stub_bridge(result={"id": "abc1234"})
+
+    tools.update(workload="/tmp/wl", ref="2", path="meta.owner", value="alice")
+
+    assert recorder.calls == [("update", ["--workload", "/tmp/wl", "2", "meta.owner", "alice"])]
 
 
 def test_rename_tool_argv(stub_bridge) -> None:
