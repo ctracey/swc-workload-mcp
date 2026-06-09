@@ -16,7 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
-    "swc-workload @ git+https://github.com/ctracey/swc-workload-cli.git",
+    "swc-workload @ git+https://github.com/ctracey/swc-workload-cli.git@v1.1.3",
 ]
 
 [project.scripts]
