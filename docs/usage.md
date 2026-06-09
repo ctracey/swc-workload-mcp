@@ -123,18 +123,15 @@ in a key name would be misinterpreted as a sub-path.
 
 ### Example flow
 
+The workload for this scenario lives at `/tmp/meta-demo`. Mention it
+once when you set up the session — the agent carries it forward.
+
 #### 1. Check and initialise
 
-```
-exists  workload=/tmp/meta-demo
-→ false
+> Check if there's a workload at `/tmp/meta-demo`. If not, initialise one there.
 
-init    workload=/tmp/meta-demo
-→ {"initialised": true}
-
-exists  workload=/tmp/meta-demo
-→ true
-```
+`exists` returns `false`, `init` creates the workload, a second
+`exists` confirms `true`.
 
 #### 2. Add items with metadata
 
@@ -142,68 +139,41 @@ Pass `meta` as a JSON object at creation time. Namespace your keys —
 here `swc:` — to avoid collisions with other tools writing to this
 workload.
 
-```
-add  workload=/tmp/meta-demo
-     title="Implement login page"
-     meta={"swc:owner": "alice", "swc:priority": "high"}
+> Add "Implement login page" with meta `{"swc:owner": "alice", "swc:priority": "high"}`.
 
-add  workload=/tmp/meta-demo
-     title="Write unit tests"
-     meta={"swc:owner": "bob", "swc:estimate": "2d"}
+> Add "Write unit tests" with meta `{"swc:owner": "bob", "swc:estimate": "2d"}`.
 
-add  workload=/tmp/meta-demo
-     title="Deploy to staging"
-     meta={"swc:owner": "alice", "swc:estimate": "1d"}
-```
+> Add "Deploy to staging" with meta `{"swc:owner": "alice", "swc:estimate": "1d"}`.
+
+Each response includes the new item's id and number.
 
 #### 3. Find by metadata
 
 Presence check — all items that have `swc:owner` set:
 
-```
-find  workload=/tmp/meta-demo  meta=swc:owner
-→ [all three items]
-```
+> Find all items in the workload that have `swc:owner` set.
 
-Pattern match — items where `swc:owner` matches `alice` (regex,
-`re.search`; partial matches work):
+Pattern match — only alice's items (`pattern` uses `re.search`;
+partial matches work):
 
-```
-find  workload=/tmp/meta-demo  meta=swc:owner  pattern=alice
-→ [{"title": "Implement login page", ...}, {"title": "Deploy to staging", ...}]
-```
+> Find items in the workload where `swc:owner` matches alice.
 
 #### 4. Fetch a single item
 
-```
-get  workload=/tmp/meta-demo  ref=1
-→ {
-    "id": "a1b2c3d", "number": "1",
-    "title": "Implement login page",
-    "status": "not-started",
-    "meta": {"swc:owner": "alice", "swc:priority": "high"}
-  }
-```
+> Get item 1.
 
-`get` always returns the full `meta` blob.
+The response includes the full `meta` blob — useful for inspecting
+all metadata before an update.
 
 #### 5. Update metadata
 
-Write a single field — path is `meta.<key>`:
+Write a single field (path notation: `meta.<key>`):
 
-```
-update  workload=/tmp/meta-demo  ref=1
-        path=meta.swc:priority  value=low
-```
+> Set `swc:priority` to `low` on item 1.
 
-Replace the entire meta object — path is `meta`, value must be a
-JSON object:
+Replace the entire meta object:
 
-```
-update  workload=/tmp/meta-demo  ref=1
-        path=meta
-        value={"swc:owner": "alice", "swc:priority": "low", "swc:reviewed": true}
-```
+> Replace item 1's meta with `{"swc:owner": "alice", "swc:priority": "low", "swc:reviewed": true}`.
 
 ## Meta Path Notation Reference
 
