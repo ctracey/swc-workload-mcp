@@ -28,18 +28,18 @@
     {
       "id": "d9d276d",
       "title": "Reads",
-      "status": "not-started",
+      "status": "done",
       "children": [
         {
           "id": "4b7b6d1",
           "title": "`get(ref, meta=True)` \u2014 dedicated single-item lookup, meta on by default",
-          "status": "not-started",
+          "status": "done",
           "children": []
         },
         {
           "id": "648bbf3",
           "title": "`find_by_meta(path, pattern?)` \u2014 path-based; presence if no pattern, regex match if pattern provided",
-          "status": "not-started",
+          "status": "done",
           "children": []
         }
       ]
