@@ -41,31 +41,6 @@
           "title": "`find_by_meta(path, pattern?)` \u2014 path-based; presence if no pattern, regex match if pattern provided",
           "status": "not-started",
           "children": []
-        },
-        {
-          "id": "d51b4af",
-          "title": "Meta opt-in on existing reads: `list` / `find` / `summary` accept `meta: bool`",
-          "status": "not-started",
-          "children": []
-        },
-        {
-          "id": "b6169d5",
-          "title": "Boolean flag convention shift: `--no-ids` \u2192 `--ids true|false` on `list`",
-          "status": "not-started",
-          "children": []
-        }
-      ]
-    },
-    {
-      "id": "2245696",
-      "title": "Transitions",
-      "status": "not-started",
-      "children": [
-        {
-          "id": "17d823e",
-          "title": "`start` / `complete` / `reset` accept optional `meta: {path: value, ...}` \u2014 multi-path atomic with status flip",
-          "status": "not-started",
-          "children": []
         }
       ]
     },
@@ -76,7 +51,7 @@
       "children": [
         {
           "id": "9c6a118",
-          "title": "`version()` tool \u2014 returns `{mcp, cli}` versions",
+          "title": "`version()` tool \u2014 returns `{mcp: \"<ver>\"}` (MCP package version only)",
           "status": "not-started",
           "children": []
         },

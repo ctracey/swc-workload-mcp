@@ -64,6 +64,121 @@ async def test_find_single_match(mcpw_ready):
     assert "boring" not in titles
 
 
+@pytest.mark.anyio
+async def test_find_meta_presence(mcpw_ready):
+    """find with --meta and no pattern matches items that have the path set."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="tagged")
+    await call_tool("add", workload=w, title="plain")
+    await call_tool("update", workload=w, ref="1", path="meta.stage", value="plan")
+
+    result = await call_tool("find", workload=w, meta="stage")
+    assert result.error is None, result.error
+    titles = [m["title"] for m in result.payload["matches"]]
+    assert "tagged" in titles
+    assert "plain" not in titles
+
+
+@pytest.mark.anyio
+async def test_find_meta_pattern(mcpw_ready):
+    """find with --meta and a pattern matches items whose meta value matches."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="alpha")
+    await call_tool("add", workload=w, title="beta")
+    await call_tool("update", workload=w, ref="1", path="meta.stage", value="plan")
+    await call_tool("update", workload=w, ref="2", path="meta.stage", value="implement")
+
+    result = await call_tool("find", workload=w, meta="stage", pattern="plan")
+    assert result.error is None, result.error
+    titles = [m["title"] for m in result.payload["matches"]]
+    assert "alpha" in titles
+    assert "beta" not in titles
+
+
+# ---------------------------------------------------------------------------
+# get
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.anyio
+async def test_get_returns_single_item_with_meta(mcpw_ready):
+    """get returns a single item object including the full meta blob."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="my item")
+    await call_tool("update", workload=w, ref="1", path="meta.owner", value="alice")
+
+    result = await call_tool("get", workload=w, ref="1")
+    assert result.error is None, result.error
+    item = result.payload
+    assert item["title"] == "my item"
+    assert "id" in item
+    assert "status" in item
+    assert item["meta"]["owner"] == "alice"
+
+
+@pytest.mark.anyio
+async def test_get_unknown_ref_errors(mcpw_ready):
+    """get on a missing ref surfaces a CLI error."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="only item")
+    result = await call_tool("get", workload=w, ref="9.9")
+    assert result.error is not None
+    assert "not found" in result.error.lower()
+
+
+# ---------------------------------------------------------------------------
+# update — meta writes
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.anyio
+async def test_update_sets_meta_subpath(mcpw_ready):
+    """update meta.<path> writes the value and get reflects it."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="item")
+    result = await call_tool("update", workload=w, ref="1", path="meta.owner", value="alice")
+    assert result.error is None, result.error
+
+    item = (await call_tool("get", workload=w, ref="1")).payload
+    assert item["meta"]["owner"] == "alice"
+
+
+@pytest.mark.anyio
+async def test_update_replaces_meta_root(mcpw_ready):
+    """update meta with a JSON object replaces the entire meta blob."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="item")
+    await call_tool("update", workload=w, ref="1", path="meta.old", value="x")
+    result = await call_tool("update", workload=w, ref="1", path="meta", value='{"owner":"bob"}')
+    assert result.error is None, result.error
+
+    item = (await call_tool("get", workload=w, ref="1")).payload
+    assert item["meta"] == {"owner": "bob"}
+
+
+@pytest.mark.anyio
+async def test_update_rejects_id_path(mcpw_ready):
+    """update with path=id is rejected by the CLI."""
+    call_tool, workload, _wlj, _seed = mcpw_ready
+    w = str(workload)
+
+    await call_tool("add", workload=w, title="item")
+    result = await call_tool("update", workload=w, ref="1", path="id", value="newid")
+    assert result.error is not None
+
+
 # ---------------------------------------------------------------------------
 # resolve by number / hash id; reference not found
 # ---------------------------------------------------------------------------
