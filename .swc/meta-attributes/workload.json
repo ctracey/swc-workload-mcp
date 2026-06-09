@@ -62,12 +62,6 @@
           "children": []
         },
         {
-          "id": "3bd5d53",
-          "title": "Usage docs: read defaults table, boolean flag convention, breaking-change note",
-          "status": "not-started",
-          "children": []
-        },
-        {
           "id": "89f3488",
           "title": "Architecture docs: meta field \u2014 namespace convention (`vendor:purpose`), dot-path notation, presence vs pattern modes",
           "status": "not-started",
@@ -76,7 +70,7 @@
         {
           "id": "62eca82",
           "title": "README: refresh tools list as a table (name, description, new/changed marker)",
-          "status": "not-started",
+          "status": "done",
           "children": []
         },
         {
