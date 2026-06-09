@@ -58,12 +58,30 @@
         {
           "id": "88c7de1",
           "title": "Usage docs: `meta` field, namespace convention (`vendor:purpose`, avoid dots), `update_meta` + `find_by_meta` path usage",
-          "status": "not-started",
+          "status": "done",
           "children": []
         },
         {
           "id": "3bd5d53",
           "title": "Usage docs: read defaults table, boolean flag convention, breaking-change note",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "89f3488",
+          "title": "Architecture docs: meta field \u2014 namespace convention (`vendor:purpose`), dot-path notation, presence vs pattern modes",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "62eca82",
+          "title": "README: refresh tools list as a table (name, description, new/changed marker)",
+          "status": "not-started",
+          "children": []
+        },
+        {
+          "id": "548c335",
+          "title": "Development docs: note pinned CLI version, confirm `make install` handles it, upgrade path",
           "status": "not-started",
           "children": []
         }
