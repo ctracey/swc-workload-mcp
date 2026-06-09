@@ -80,7 +80,7 @@ that's already on `PATH` (no `uv`), the command simplifies to just
 In a fresh Claude Code session started inside the repo:
 
 1. **Check it's connected.** Type `/mcp`. You should see
-   `swc-workload` listed as **connected** with 12 tools. If it shows
+   `swc-workload` listed as **connected** with 15 tools. If it shows
    **failed**, expand the entry — the server's stderr is shown
    there; the most common cause is the `swc-workload` CLI not being
    resolvable, which `uv run` should fix.
