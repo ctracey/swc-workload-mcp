@@ -4,6 +4,12 @@ How to register `swc-workload-mcp` with an MCP client and confirm
 it's working. For install and dev setup, see
 [Development](development.md).
 
+- [MCP Client Setup (Claude Code)](#claude-code-setup)
+- [Verify MCP Server Setup](#verify-mcp-server-setup)
+- [Example Scenario with Metadata](#example-scenario-with-metadata)
+- [Meta Path Notation Reference](#meta-path-notation-reference)
+
+
 ## Register with an MCP client
 
 Point an MCP client at the server. The launch command below is the
@@ -103,7 +109,7 @@ In a fresh Claude Code session started inside the repo:
 For a more interactive way to poke at the server (independent of any
 client), see [Test with MCP Inspector](test-with-mcp-inspector.md).
 
-## Working with meta fields
+## Example Scenario with Metadata
 
 Every work item carries a free-form JSON object called `meta`
 (defaults to `{}`). Attach owner, estimate, priority, links, or
@@ -199,7 +205,7 @@ update  workload=/tmp/meta-demo  ref=1
         value={"swc:owner": "alice", "swc:priority": "low", "swc:reviewed": true}
 ```
 
-### Path notation reference
+## Meta Path Notation Reference
 
 The dot in `meta.swc:priority` is the path separator — everything
 after the first dot is the key name within the meta object. This is
