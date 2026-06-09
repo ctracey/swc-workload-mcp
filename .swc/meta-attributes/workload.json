@@ -47,7 +47,7 @@
     {
       "id": "eb41879",
       "title": "Docs + version handshake",
-      "status": "in-progress",
+      "status": "done",
       "children": [
         {
           "id": "9c6a118",
@@ -64,7 +64,7 @@
         {
           "id": "89f3488",
           "title": "Architecture docs: meta field \u2014 namespace convention (`vendor:purpose`), dot-path notation, presence vs pattern modes",
-          "status": "not-started",
+          "status": "done",
           "children": []
         },
         {

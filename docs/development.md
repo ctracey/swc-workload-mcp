@@ -45,6 +45,13 @@ It gives you:
 - The `swc_workload_mcp` Python module (editable install)
 - `pytest` for the test suite
 
+### CLI version pin
+
+`make install` installs `swc-workload` at the version pinned in
+`pyproject.toml` under `[project.optional-dependencies] dev`. The
+current pin is `v1.2.1`. To test against a different CLI release,
+update the `@v1.2.1` tag in that entry and re-run `make install`.
+
 Run `make help` at any time to see all the project commands
 (`install`, `test`, `test-unit`, `test-integration`, `test-e2e`, `dev`).
 
@@ -56,7 +63,7 @@ folder per tier:
 | Tier | Folder | Needs `swc-workload` CLI? | What it covers |
 | --- | --- | --- | --- |
 | Unit | `tests/mcp/unit/` | No | Bridge, tools, and server wiring against stubs |
-| Integration | `tests/mcp/integration/` | **Yes** | All 12 tools end-to-end through a real MCP server subprocess and the real CLI |
+| Integration | `tests/mcp/integration/` | **Yes** | All 15 tools end-to-end through a real MCP server subprocess and the real CLI |
 | E2E | `tests/mcp/e2e/` | **Yes** | In-memory smoke of `init` through the wired FastMCP → tools → bridge → CLI chain |
 
 The integration and e2e tiers **fail loudly** (not skip) if the CLI
