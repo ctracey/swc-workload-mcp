@@ -9,9 +9,9 @@ Each tool is a thin typed callable that:
    as a FastMCP :class:`~mcp.server.fastmcp.exceptions.ToolError` with
    an actionable hint.
 
-The module exports a :data:`TOOLS` registry — a list of the 12
-callables — which the FastMCP server (work item 2.4) iterates over to
-register each tool against the server instance.
+The module exports a :data:`TOOLS` registry — a list of callables —
+which the FastMCP server (work item 2.4) iterates over to register each
+tool against the server instance.
 
 Tool names are flat (e.g. ``add``, not ``workload_add``) because the
 MCP client namespaces them by server name. The ``list`` tool shadows
@@ -38,7 +38,9 @@ __all__ = [
     "list",
     "find",
     "summary",
+    "get",
     "add",
+    "update",
     "rename",
     "delete",
     "reset",
@@ -179,9 +181,33 @@ def list(  # noqa: A001 — intentional shadowing of builtin, see module docstri
     return _invoke_text("list", args)
 
 
-def find(workload: str, keyword: str) -> Any:
-    """Find work items whose title contains ``keyword`` (case-insensitive)."""
-    args = ["--workload", workload, keyword]
+def find(
+    workload: str,
+    keyword: str | None = None,
+    meta: str | None = None,
+    pattern: str | None = None,
+) -> Any:
+    """Find work items by title or meta content.
+
+    Two modes (mutually exclusive):
+
+    - **Title mode** — ``keyword`` required, ``meta`` omitted. Case-insensitive
+      substring match against item titles.
+    - **Meta mode** — ``meta`` required, ``keyword`` omitted. Searches by meta
+      path. ``pattern`` is an optional regex (``re.search``); omit for a
+      presence-only check.
+    """
+    if keyword is None and meta is None:
+        raise ToolError("find requires either keyword (title mode) or meta (meta mode).")
+    if keyword is not None and meta is not None:
+        raise ToolError("find accepts keyword or meta, not both.")
+    args = ["--workload", workload]
+    if meta is not None:
+        args += ["--meta", meta]
+        if pattern is not None:
+            args.append(pattern)
+    else:
+        args.append(keyword)
     return _invoke("find", args)
 
 
@@ -189,6 +215,12 @@ def summary(workload: str) -> Any:
     """Emit total / done / progress percentage for the workload."""
     args = ["--workload", workload]
     return _invoke("summary", args)
+
+
+def get(workload: str, ref: str) -> Any:
+    """Fetch a single work item by ref. Always returns JSON including the full meta blob."""
+    args = ["--workload", workload, ref]
+    return _invoke("get", args)
 
 
 def add(
@@ -211,6 +243,23 @@ def add(
     if ref is not None:
         args.append(ref)
     return _invoke("add", args)
+
+
+def update(workload: str, ref: str, path: str, value: str) -> Any:
+    """Update a field on a work item.
+
+    ``path`` routing:
+
+    - ``title`` — rename the item.
+    - ``status`` — transition status; canonical values ``not-started``,
+      ``in-progress``, ``done`` or aliases ``todo``, ``wip``, ``complete``.
+    - ``meta`` — replace the entire meta object (``value`` must be a JSON object).
+    - ``meta.<subpath>`` — write a single field using dotted + bracket-index
+      notation (e.g. ``meta.owner``, ``meta.tags[0]``). Values are parsed as
+      JSON first; plain text falls back to a string.
+    """
+    args = ["--workload", workload, ref, path, value]
+    return _invoke("update", args)
 
 
 def rename(workload: str, ref: str, title: str) -> Any:
@@ -274,7 +323,9 @@ TOOLS = [
     list,
     find,
     summary,
+    get,
     add,
+    update,
     rename,
     delete,
     reset,

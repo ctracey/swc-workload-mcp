@@ -197,7 +197,7 @@ def test_cli_response_error_maps_to_tool_error_with_version_mismatch_hint(
 
 
 # ---------------------------------------------------------------------------
-# REQ-06 — module exposes exactly the 12 expected tools
+# REQ-06 — module exposes exactly the 14 expected tools
 # ---------------------------------------------------------------------------
 
 
@@ -207,7 +207,9 @@ EXPECTED_TOOLS = [
     "list",
     "find",
     "summary",
+    "get",
     "add",
+    "update",
     "rename",
     "delete",
     "reset",
@@ -217,7 +219,7 @@ EXPECTED_TOOLS = [
 ]
 
 
-def test_module_exposes_exactly_the_12_expected_tools() -> None:
+def test_module_exposes_exactly_the_14_expected_tools() -> None:
     registry_names = [fn.__name__ for fn in tools.TOOLS]
     assert registry_names == EXPECTED_TOOLS
 
@@ -248,16 +250,24 @@ EXPECTED_SIGNATURES: dict[str, dict[str, Any]] = {
         "optional": ["ref", "filter", "exclude", "no_ids", "json"],
     },
     "find": {
-        "required": ["workload", "keyword"],
-        "optional": [],
+        "required": ["workload"],
+        "optional": ["keyword", "meta", "pattern"],
     },
     "summary": {
         "required": ["workload"],
         "optional": [],
     },
+    "get": {
+        "required": ["workload", "ref"],
+        "optional": [],
+    },
     "add": {
         "required": ["workload", "title"],
         "optional": ["placement", "ref"],
+    },
+    "update": {
+        "required": ["workload", "ref", "path", "value"],
+        "optional": [],
     },
     "rename": {
         "required": ["workload", "ref", "title"],

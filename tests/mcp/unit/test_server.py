@@ -233,7 +233,7 @@ def test_server_version_is_set_on_low_level_server() -> None:
 
 
 # ---------------------------------------------------------------------------
-# REQ-05 — exactly 12 tools registered with the right flat names
+# REQ-05 — exactly 14 tools registered with the right flat names
 # ---------------------------------------------------------------------------
 
 
@@ -243,7 +243,9 @@ EXPECTED_TOOL_NAMES = [
     "list",
     "find",
     "summary",
+    "get",
     "add",
+    "update",
     "rename",
     "delete",
     "reset",
@@ -253,7 +255,7 @@ EXPECTED_TOOL_NAMES = [
 ]
 
 
-def test_exactly_twelve_tools_registered_with_flat_names(
+def test_exactly_fourteen_tools_registered_with_flat_names(
     fake_cli: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -266,7 +268,7 @@ def test_exactly_twelve_tools_registered_with_flat_names(
 
     registered_names = sorted(t.name for t in server.mcp._tool_manager.list_tools())
     assert registered_names == sorted(EXPECTED_TOOL_NAMES)
-    assert len(registered_names) == 12
+    assert len(registered_names) == 14
 
 
 # ---------------------------------------------------------------------------
