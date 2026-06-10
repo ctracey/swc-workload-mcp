@@ -30,6 +30,7 @@ __all__ = [
     "CLIResponseError",
     "invoke",
     "invoke_text",
+    "invoke_version",
     "resolve_binary",
 ]
 
@@ -186,6 +187,20 @@ def invoke(op: str, args: list[str]) -> Any:
         return json.loads(stdout)
     except json.JSONDecodeError as exc:
         raise CLIResponseError(stdout) from exc
+
+
+def invoke_version() -> str:
+    """Return the CLI version string from ``swc-workload --version``.
+
+    Raises
+    ------
+    CLINotFoundError
+        If the CLI binary cannot be resolved.
+    CLIExecutionError
+        If the CLI exits with a non-zero code.
+    """
+    binary = resolve_binary()
+    return _run([binary, "--version"]).strip()
 
 
 def invoke_text(op: str, args: list[str]) -> str:

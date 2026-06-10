@@ -320,12 +320,18 @@ def move(
 
 
 def version() -> Any:
-    """Return the MCP server version.
+    """Return the MCP server and CLI versions.
 
-    Returns ``{"mcp": "<version>"}`` so callers can detect compatibility
-    without inspecting the package directly.
+    Returns ``{"mcp": "<version>", "cli": "<version>"}`` so callers can
+    detect compatibility without inspecting packages directly. ``"cli"``
+    is ``null`` if the CLI binary cannot be found or fails to report its
+    version.
     """
-    return {"mcp": __version__}
+    try:
+        cli_ver: str | None = bridge.invoke_version()
+    except bridge.BridgeError:
+        cli_ver = None
+    return {"mcp": __version__, "cli": cli_ver}
 
 
 # ---------------------------------------------------------------------------

@@ -551,20 +551,32 @@ def test_move_tool_absolute(stub_bridge) -> None:
 
 
 # ---------------------------------------------------------------------------
-# version — does not call the bridge
+# version — calls bridge.invoke_version for CLI version
 # ---------------------------------------------------------------------------
 
 
-def test_version_returns_mcp_key() -> None:
+def test_version_returns_mcp_and_cli_keys(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(tools.bridge, "invoke_version", lambda: "1.0.0")
     result = tools.version()
     assert "mcp" in result
     assert isinstance(result["mcp"], str)
     assert len(result["mcp"]) > 0
+    assert result["cli"] == "1.0.0"
 
 
-def test_version_matches_package_version() -> None:
+def test_version_matches_package_version(monkeypatch: pytest.MonkeyPatch) -> None:
     from swc_workload_mcp import __version__
-    assert tools.version() == {"mcp": __version__}
+    monkeypatch.setattr(tools.bridge, "invoke_version", lambda: "9.9.9")
+    assert tools.version() == {"mcp": __version__, "cli": "9.9.9"}
+
+
+def test_version_cli_is_null_when_cli_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise_not_found() -> str:
+        raise bridge.CLINotFoundError(["swc-workload"])
+
+    monkeypatch.setattr(tools.bridge, "invoke_version", _raise_not_found)
+    result = tools.version()
+    assert result["cli"] is None
 
 
 # ---------------------------------------------------------------------------
